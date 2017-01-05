@@ -343,21 +343,21 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
     }
 
     @Override
-    public final void showErrorTip() {
+    public void showErrorTip() {
         if (mRefreshMode == RefreshMode.FRAME || getAdapter().getItemCount() == 0) {
             super.showErrorTip();
         }
     }
 
     @Override
-    public final void showEmptyTip() {
+    public void showEmptyTip() {
         if (mRefreshMode == RefreshMode.FRAME || getAdapter().getItemCount() == 0) {
             super.showEmptyTip();
         }
     }
 
     @Override
-    public final void hideContent() {
+    public void hideContent() {
         if (mRefreshMode == RefreshMode.FRAME || getAdapter().getItemCount() == 0) {
             super.hideContent();
         }
