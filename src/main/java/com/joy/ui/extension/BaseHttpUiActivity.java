@@ -30,7 +30,7 @@ public abstract class BaseHttpUiActivity<T> extends com.joy.ui.activity.BaseHttp
     protected void onPause() {
         super.onPause();
         if (isFinishing()) {
-            cancelRequest();
+            cancelLauncher();
         }
     }
 
@@ -51,7 +51,7 @@ public abstract class BaseHttpUiActivity<T> extends com.joy.ui.activity.BaseHttp
         return mObjReq != null && mObjReq.isFinalResponse();
     }
 
-    protected final void cancelRequest() {
+    protected final void cancelLauncher() {
         if (mObjReq != null) {
             mObjReq.cancel();
             mObjReq = null;
@@ -87,7 +87,7 @@ public abstract class BaseHttpUiActivity<T> extends com.joy.ui.activity.BaseHttp
     }
 
     final Observable<T> launch(RequestMode mode) {
-        cancelRequest();
+        cancelLauncher();
         mObjReq = getRequest();
         mObjReq.setRequestMode(mode);
         mObjReq.setResponseListener(getObjRespLis());

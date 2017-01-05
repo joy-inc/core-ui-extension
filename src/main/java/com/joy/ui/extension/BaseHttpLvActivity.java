@@ -5,8 +5,7 @@ import android.support.annotation.ColorRes;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v4.widget.SwipeRefreshLayout.OnRefreshListener;
 import android.view.View;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.AdapterView.OnItemLongClickListener;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.HeaderViewListAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
@@ -21,6 +20,10 @@ import com.joy.utils.CollectionUtil;
 
 import java.util.List;
 
+import rx.Observable;
+
+import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+
 /**
  * Created by KEVIN.DAI on 15/7/16.
  *
@@ -29,12 +32,14 @@ import java.util.List;
  */
 public abstract class BaseHttpLvActivity<T> extends BaseHttpUiActivity<T> {
 
+    private static final int PAGE_UPPER_LIMIT = 20;// 默认分页大小
+    private static final int PAGE_START_INDEX = 1;// 默认起始页码
     private SwipeRefreshLayout mSwipeRefreshWidget;
     private ListView mListView;
-    private int mPageLimit = 20;
-    private static final int PAGE_START_INDEX = 1;// 默认从第一页开始
+    private int mPageLimit = PAGE_UPPER_LIMIT;
     private int mPageIndex = PAGE_START_INDEX;
     private int mSortIndex = mPageIndex;
+    private RefreshMode mRefreshMode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,7 +64,7 @@ public abstract class BaseHttpLvActivity<T> extends BaseHttpUiActivity<T> {
         mSwipeRefreshWidget = new SwipeRefreshLayout(this);
         mSwipeRefreshWidget.setColorSchemeResources(R.color.color_accent);
         mSwipeRefreshWidget.setOnRefreshListener(getDefaultRefreshLisn());
-        mSwipeRefreshWidget.addView(contentView);
+        mSwipeRefreshWidget.addView(contentView, new LayoutParams(MATCH_PARENT, MATCH_PARENT));
         return mSwipeRefreshWidget;
     }
 
@@ -67,9 +72,9 @@ public abstract class BaseHttpLvActivity<T> extends BaseHttpUiActivity<T> {
         return () -> {
             if (isNetworkEnable()) {
                 mSortIndex = mPageIndex;
-                mPageIndex = PAGE_START_INDEX;
-                stopLoadMore();
-                startRefresh();
+                setRefreshMode(RefreshMode.SWIPE);
+                setPageIndex(PAGE_START_INDEX);
+                launch(RequestMode.REFRESH_ONLY);
             } else {
                 hideSwipeRefresh();
                 showToast(R.string.toast_common_no_network);
@@ -87,8 +92,8 @@ public abstract class BaseHttpLvActivity<T> extends BaseHttpUiActivity<T> {
                         mPageIndex = mSortIndex;
                     }
                 }
-                hideSwipeRefresh();
-                startRefresh();
+                setRefreshMode(RefreshMode.LOADMORE);
+                launch(RequestMode.REFRESH_ONLY);
             } else {
                 setLoadMoreFailed();
                 if (!isAuto) {
@@ -98,77 +103,122 @@ public abstract class BaseHttpLvActivity<T> extends BaseHttpUiActivity<T> {
         };
     }
 
-    private void startRefresh() {
-        launchRefreshOnly();
+    @Override
+    protected final ObjectRequest<T> getRequest() {
+        return getRequest(mPageIndex, mPageLimit);
+    }
+
+    protected abstract ObjectRequest<T> getRequest(int pageIndex, int pageLimit);
+
+    @Override
+    protected final Observable<T> launchRefreshOnly() {
+        setRefreshMode(RefreshMode.FRAME);
+        setPageIndex(PAGE_START_INDEX);
+        return super.launchRefreshOnly();
     }
 
     @Override
-    protected final ObjectRequest<T> getRequest() {
-        return getObjectRequest(mPageIndex, mPageLimit);
+    protected final Observable<T> launchCacheOnly() {
+        setRefreshMode(RefreshMode.FRAME);
+        setPageIndex(PAGE_START_INDEX);
+        return super.launchCacheOnly();
     }
 
-    protected abstract ObjectRequest<T> getObjectRequest(int pageIndex, int pageLimit);
+    @Override
+    protected final Observable<T> launchRefreshAndCache() {
+        setRefreshMode(RefreshMode.FRAME);
+        setPageIndex(PAGE_START_INDEX);
+        return super.launchRefreshAndCache();
+    }
+
+    @Override
+    protected final Observable<T> launchCacheAndRefresh() {
+        setRefreshMode(RefreshMode.FRAME);
+        setPageIndex(PAGE_START_INDEX);
+        return super.launchCacheAndRefresh();
+    }
 
     /**
      * show swipe refresh view {@link SwipeRefreshLayout}
      */
-    protected void launchSwipeRefresh() {
-        showSwipeRefresh();
-        mPageIndex = PAGE_START_INDEX;
+    protected final void launchSwipeRefresh() {
+        setRefreshMode(RefreshMode.SWIPE);
+        setPageIndex(PAGE_START_INDEX);
         doOnRetry();
     }
 
     /**
      * show frame refresh view {@link JLoadingView}
      */
-    protected void launchFrameRefresh() {
-        mPageIndex = PAGE_START_INDEX;
+    protected final void launchFrameRefresh() {
+        setRefreshMode(RefreshMode.FRAME);
+        setPageIndex(PAGE_START_INDEX);
         doOnRetry();
+    }
+
+    private void setRefreshMode(RefreshMode mode) {
+        mRefreshMode = mode;
     }
 
     /**
      * 设置分页大小
      *
-     * @param pageLimit
+     * @param pageLimit 分页大小
      */
-    protected void setPageLimit(int pageLimit) {
+    protected final void setPageLimit(int pageLimit) {
         mPageLimit = pageLimit;
+    }
+
+    protected final int getPageLimit() {
+        return mPageLimit;
     }
 
     /**
      * 设置页码
      *
-     * @param index
+     * @param index 页码
      */
-    protected void setPageIndex(int index) {
+    protected final void setPageIndex(int index) {
         mPageIndex = index;
     }
 
-    protected ListView getListView() {
+    protected final int getPageIndex() {
+        return mPageIndex;
+    }
+
+    protected final ListView getListView() {
         return mListView;
     }
 
-    protected void addHeaderView(View v) {
+    protected final int getHeaderViewsCount() {
+        return mListView.getHeaderViewsCount();
+    }
+
+    protected final int getFooterViewsCount() {
+        return mListView.getFooterViewsCount();
+    }
+
+    protected final void addHeaderView(View v) {
         mListView.addHeaderView(v);
     }
 
-    protected void addFooterView(View v) {
+    protected final void addFooterView(View v) {
         mListView.addFooterView(v);
     }
 
-    protected void setOnItemClickListener(OnItemClickListener listener) {
-        mListView.setOnItemClickListener(listener);
+    protected final void removeHeaderView(View v) {
+        mListView.removeHeaderView(v);
     }
 
-    protected void setOnItemLongClickListener(OnItemLongClickListener listener) {
-        mListView.setOnItemLongClickListener(listener);
+    protected final void removeFooterView(View v) {
+        mListView.removeFooterView(v);
     }
 
-    protected void setAdapter(ExLvAdapter adapter) {
+    protected final void setAdapter(ExLvAdapter adapter) {
         mListView.setAdapter(adapter);
     }
 
-    protected ExLvAdapter getAdapter() {
+    protected final ExLvAdapter getAdapter() {
         ListAdapter adapter = mListView.getAdapter();
         if (adapter instanceof HeaderViewListAdapter) {
             return (ExLvAdapter) ((HeaderViewListAdapter) adapter).getWrappedAdapter();
@@ -179,25 +229,44 @@ public abstract class BaseHttpLvActivity<T> extends BaseHttpUiActivity<T> {
 
     @Override
     protected boolean invalidateContent(T t) {
+        ExLvAdapter adapter = getAdapter();
+        if (adapter == null) {
+            return false;
+        }
+        final int adapterItemCount = adapter.getCount();
         List<?> datas = getListInvalidateContent(t);
-        if (CollectionUtil.isEmpty(datas)) {
+        final int currentItemCount = CollectionUtil.size(datas);
+        if (currentItemCount == 0) {
+            if (mPageIndex == PAGE_START_INDEX) {
+                if (adapterItemCount > 0) {
+                    adapter.clear();
+                    adapter.notifyDataSetChanged();
+                }
+            } else {
+                setLoadMoreEnable(false);
+                return true;
+            }
             return false;
         }
 
-        setLoadMoreEnable(datas.size() >= mPageLimit);
         stopLoadMore();
+        setLoadMoreEnable(currentItemCount >= mPageLimit);
 
-        ExLvAdapter adapter = getAdapter();
-        if (adapter != null) {
-            if (mPageIndex == PAGE_START_INDEX) {
-                adapter.setData(datas);
+        if (mPageIndex == PAGE_START_INDEX) {
+            adapter.setData(datas);
+            if (adapterItemCount == 0) {
+                adapter.notifyDataSetChanged();
+                addLoadMoreIfNotExist();
             } else {
-                adapter.addAll(datas);
+                adapter.notifyDataSetChanged();
+                mListView.smoothScrollToPosition(0);
             }
+        } else {
+            adapter.addAll(datas);
             adapter.notifyDataSetChanged();
-            if (isFinalResponse()) {
-                mPageIndex++;
-            }
+        }
+        if (isFinalResponse()) {
+            mPageIndex++;
         }
         return true;
     }
@@ -217,41 +286,58 @@ public abstract class BaseHttpLvActivity<T> extends BaseHttpUiActivity<T> {
     }
 
     @Override
-    public final void showLoading() {
-        if (getRequestMode() == RequestMode.CACHE_AND_REFRESH && isReqHasCache())
-            showSwipeRefresh();
-        else if (!isSwipeRefreshing() && !isLoadingMore())
-            super.showLoading();
+    public final void showLoading() {// dispatch loading view
+        if (getRequestMode() == RequestMode.CACHE_AND_REFRESH && isReqHasCache()) {
+            setRefreshMode(RefreshMode.SWIPE);
+        }
+        switch (mRefreshMode) {
+            case SWIPE:
+                showSwipeRefresh();
+                stopLoadMore();
+                super.hideLoading();
+                break;
+            case FRAME:
+                hideSwipeRefresh();
+                hideLoadMore();
+                super.showLoading();
+                break;
+            case LOADMORE:
+                hideSwipeRefresh();
+                break;
+        }
     }
 
     @Override
     public final void hideLoading() {
-        if (isSwipeRefreshing())
-            hideSwipeRefresh();
-        else
-            super.hideLoading();
+        switch (mRefreshMode) {
+            case SWIPE:
+                hideSwipeRefresh();
+                break;
+            case FRAME:
+                super.hideLoading();
+                break;
+        }
     }
 
     @Override
     public final void showErrorTip() {
-        if (getItemCount() - 1 == 0)
+        if (mRefreshMode == RefreshMode.FRAME || getAdapter().getCount() == 0) {
             super.showErrorTip();
+        }
     }
 
     @Override
     public final void showEmptyTip() {
-        if (getItemCount() - 1 == 0)
+        if (mRefreshMode == RefreshMode.FRAME || getAdapter().getCount() == 0) {
             super.showEmptyTip();
+        }
     }
 
     @Override
     public final void hideContent() {
-        if (getItemCount() - 1 == 0)
+        if (mRefreshMode == RefreshMode.FRAME || getAdapter().getCount() == 0) {
             super.hideContent();
-    }
-
-    private int getItemCount() {
-        return mListView.getHeaderViewsCount() + mListView.getFooterViewsCount() + getAdapter().getCount();
+        }
     }
 
 
@@ -274,14 +360,16 @@ public abstract class BaseHttpLvActivity<T> extends BaseHttpUiActivity<T> {
     }
 
     protected void showSwipeRefresh() {
-        if (isSwipeRefreshing())
+        if (isSwipeRefreshing()) {
             return;
+        }
         mSwipeRefreshWidget.setRefreshing(true);
     }
 
     protected void hideSwipeRefresh() {
-        if (!isSwipeRefreshing())
+        if (!isSwipeRefreshing()) {
             return;
+        }
         mSwipeRefreshWidget.setRefreshing(false);
     }
     // =============================================================================================
@@ -289,6 +377,22 @@ public abstract class BaseHttpLvActivity<T> extends BaseHttpUiActivity<T> {
 
     // load more
     // =============================================================================================
+    protected final boolean isLoadMoreEnable() {
+        return mListView instanceof JListView && ((JListView) mListView).isLoadMoreEnable();
+    }
+
+    protected final void setLoadMoreEnable(boolean enable) {
+        if (mListView instanceof JListView) {
+            ((JListView) mListView).setLoadMoreEnable(enable);
+        }
+    }
+
+    protected final void addLoadMoreIfNotExist() {
+        if (isLoadMoreEnable()) {
+            ((JListView) mListView).addLoadMoreIfNotExist();
+        }
+    }
+
     protected final boolean isLoadingMore() {
         return isLoadMoreEnable() && ((JListView) mListView).isLoadingMore();
     }
@@ -301,7 +405,7 @@ public abstract class BaseHttpLvActivity<T> extends BaseHttpUiActivity<T> {
 
     protected final void setLoadMoreFailed() {
         if (isLoadMoreEnable()) {
-            ((JListView) mListView).stopLoadMoreFailed();
+            ((JListView) mListView).setLoadMoreFailed();
         }
     }
 
@@ -309,14 +413,10 @@ public abstract class BaseHttpLvActivity<T> extends BaseHttpUiActivity<T> {
         return isLoadMoreEnable() && ((JListView) mListView).isLoadMoreFailed();
     }
 
-    protected final void setLoadMoreEnable(boolean enable) {
-        if (mListView instanceof JListView) {
-            ((JListView) mListView).setLoadMoreEnable(enable);
+    protected final void hideLoadMore() {
+        if (isLoadMoreEnable()) {
+            ((JListView) mListView).hideLoadMore();
         }
-    }
-
-    protected final boolean isLoadMoreEnable() {
-        return mListView instanceof JListView && ((JListView) mListView).isLoadMoreEnable();
     }
 
     protected final void setLoadMoreDarkTheme() {

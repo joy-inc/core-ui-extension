@@ -18,6 +18,7 @@ import com.joy.ui.view.JLoadingView;
 import com.joy.ui.view.OnLoadMoreListener;
 import com.joy.ui.view.recyclerview.JRecyclerView;
 import com.joy.ui.view.recyclerview.RecyclerAdapter;
+import com.joy.utils.CollectionUtil;
 
 import java.util.List;
 
@@ -87,7 +88,7 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
                 mSortIndex = mPageIndex;
                 setRefreshMode(RefreshMode.SWIPE);
                 setPageIndex(PAGE_START_INDEX);
-                launch(RequestMode.REFRESH_ONLY);// refresh only, don't cache
+                launch(RequestMode.REFRESH_ONLY);
             } else {
                 hideSwipeRefresh();
                 showToast(R.string.toast_common_no_network);
@@ -106,7 +107,7 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
                     }
                 }
                 setRefreshMode(RefreshMode.LOADMORE);
-                launch(RequestMode.REFRESH_ONLY);// refresh only, don't cache
+                launch(RequestMode.REFRESH_ONLY);
             } else {
                 setLoadMoreFailed();
                 if (!isAuto) {
@@ -118,10 +119,10 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
 
     @Override
     protected final ObjectRequest<T> getRequest() {
-        return getObjectRequest(mPageIndex, mPageLimit);
+        return getRequest(mPageIndex, mPageLimit);
     }
 
-    protected abstract ObjectRequest<T> getObjectRequest(int pageIndex, int pageLimit);
+    protected abstract ObjectRequest<T> getRequest(int pageIndex, int pageLimit);
 
     @Override
     protected final Observable<T> launchRefreshOnly() {
@@ -157,7 +158,7 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
     protected final void launchSwipeRefresh() {
         setRefreshMode(RefreshMode.SWIPE);
         setPageIndex(PAGE_START_INDEX);
-        launch(getRequestMode());
+        doOnRetry();
     }
 
     /**
@@ -166,7 +167,7 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
     protected final void launchFrameRefresh() {
         setRefreshMode(RefreshMode.FRAME);
         setPageIndex(PAGE_START_INDEX);
-        launch(getRequestMode());
+        doOnRetry();
     }
 
     private void setRefreshMode(RefreshMode mode) {
@@ -199,19 +200,19 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
         return mPageIndex;
     }
 
-    protected RecyclerView getRecyclerView() {
+    protected final RecyclerView getRecyclerView() {
         return mRecyclerView;
     }
 
-    protected int getHeaderViewsCount() {
+    protected final int getHeaderViewsCount() {
         return ((RecyclerAdapter) mRecyclerView.getAdapter()).getHeadersCount();
     }
 
-    protected int getFooterViewsCount() {
+    protected final int getFooterViewsCount() {
         return ((RecyclerAdapter) mRecyclerView.getAdapter()).getFootersCount();
     }
 
-    protected void addHeaderView(View v) {
+    protected final void addHeaderView(View v) {
         Adapter adapter = mRecyclerView.getAdapter();
         if (adapter == null)
             throw new IllegalStateException(
@@ -219,7 +220,7 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
         ((RecyclerAdapter) adapter).addHeaderView(v);
     }
 
-    protected void addFooterView(View v) {
+    protected final void addFooterView(View v) {
         Adapter adapter = mRecyclerView.getAdapter();
         if (adapter == null)
             throw new IllegalStateException(
@@ -227,19 +228,19 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
         ((RecyclerAdapter) adapter).addFooterView(v);
     }
 
-    protected void removeHeaderView(View v) {
+    protected final void removeHeaderView(View v) {
         ((RecyclerAdapter) mRecyclerView.getAdapter()).removeHeader(v);
     }
 
-    protected void removeFooterView(View v) {
+    protected final void removeFooterView(View v) {
         ((RecyclerAdapter) mRecyclerView.getAdapter()).removeFooter(v);
     }
 
-    protected void setAdapter(ExRvAdapter adapter) {
+    protected final void setAdapter(ExRvAdapter adapter) {
         mRecyclerView.setAdapter(new RecyclerAdapter(adapter, getDefaultLayoutManager()));
     }
 
-    protected ExRvAdapter getAdapter() {
+    protected final ExRvAdapter getAdapter() {
         Adapter adapter = mRecyclerView.getAdapter();
         if (adapter instanceof RecyclerAdapter) {
             return (ExRvAdapter) ((RecyclerAdapter) adapter).getWrappedAdapter();
@@ -254,11 +255,9 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
         if (adapter == null) {
             return false;
         }
-
         final int adapterItemCount = adapter.getItemCount();
-
         List<?> datas = getListInvalidateContent(t);
-        final int currentItemCount = datas.size();
+        final int currentItemCount = CollectionUtil.size(datas);
         if (currentItemCount == 0) {
             if (mPageIndex == PAGE_START_INDEX) {
                 if (adapterItemCount > 0) {
@@ -279,8 +278,7 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
             adapter.setData(datas);
             if (adapterItemCount == 0) {
                 adapter.notifyItemRangeInserted(0, currentItemCount);
-                if (isLoadMoreEnable())
-                    ((JRecyclerView) mRecyclerView).addLoadMoreIfNotExist();
+                addLoadMoreIfNotExist();
             } else {
                 adapter.notifyItemRangeRemoved(0, adapterItemCount);
                 adapter.notifyItemRangeInserted(0, currentItemCount);
@@ -402,6 +400,22 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
 
     // load more
     // =============================================================================================
+    protected final boolean isLoadMoreEnable() {
+        return mRecyclerView instanceof JRecyclerView && ((JRecyclerView) mRecyclerView).isLoadMoreEnable();
+    }
+
+    protected final void setLoadMoreEnable(boolean enable) {
+        if (mRecyclerView instanceof JRecyclerView) {
+            ((JRecyclerView) mRecyclerView).setLoadMoreEnable(enable);
+        }
+    }
+
+    protected final void addLoadMoreIfNotExist() {
+        if (isLoadMoreEnable()) {
+            ((JRecyclerView) mRecyclerView).addLoadMoreIfNotExist();
+        }
+    }
+
     protected final boolean isLoadingMore() {
         return isLoadMoreEnable() && ((JRecyclerView) mRecyclerView).isLoadingMore();
     }
@@ -420,16 +434,6 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
 
     protected final boolean isLoadMoreFailed() {
         return isLoadMoreEnable() && ((JRecyclerView) mRecyclerView).isLoadMoreFailed();
-    }
-
-    protected final void setLoadMoreEnable(boolean enable) {
-        if (mRecyclerView instanceof JRecyclerView) {
-            ((JRecyclerView) mRecyclerView).setLoadMoreEnable(enable);
-        }
-    }
-
-    protected final boolean isLoadMoreEnable() {
-        return mRecyclerView instanceof JRecyclerView && ((JRecyclerView) mRecyclerView).isLoadMoreEnable();
     }
 
     protected final void hideLoadMore() {
