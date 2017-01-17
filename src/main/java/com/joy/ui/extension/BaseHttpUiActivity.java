@@ -4,6 +4,7 @@ import com.joy.http.JoyError;
 import com.joy.http.JoyHttp;
 import com.joy.http.RequestMode;
 import com.joy.http.ResponseListener;
+import com.joy.http.ResponseListenerImpl;
 import com.joy.http.volley.ObjectRequest;
 import com.joy.http.volley.RetroRequestQueue;
 import com.joy.utils.LogMgr;
@@ -90,18 +91,18 @@ public abstract class BaseHttpUiActivity<T> extends com.joy.ui.activity.BaseHttp
         cancelLauncher();
         mObjReq = getRequest();
         mObjReq.setRequestMode(mode);
-        mObjReq.setResponseListener(getObjRespLis());
+        mObjReq.setResponseListener(getResponseListener());
         return getLauncher().launch(mObjReq, mode);
     }
 
-    private ResponseListener<T> getObjRespLis() {
+    private ResponseListener<T> getResponseListener() {
         if (!mContentHasDisplayed) {
             hideContent();
         }
         hideTipView();
         showLoading();
 
-        return new ResponseListener<T>() {
+        return new ResponseListenerImpl<T>() {
 
             @Override
             public void onSuccess(Object tag, T t) {
@@ -124,16 +125,22 @@ public abstract class BaseHttpUiActivity<T> extends com.joy.ui.activity.BaseHttp
             }
 
             @Override
-            public void onError(Object tag, JoyError error) {
+            public void onError(Object tag, Throwable error) {
                 if (isFinishing()) {
                     return;
                 }
-                onHttpFailed(error.getMessage());
-                onHttpFailed(tag, error.getMessage());
-
+                super.onError(tag, error);
+                if (LogMgr.DEBUG) {
+                    showToast(getClass().getSimpleName() + ": " + error.getMessage());
+                }
                 hideLoading();
                 hideContent();
                 showErrorTip();
+            }
+
+            @Override
+            public void onError(Object tag, JoyError error) {
+                onHttpFailed(tag, error);
             }
         };
     }
@@ -143,13 +150,7 @@ public abstract class BaseHttpUiActivity<T> extends com.joy.ui.activity.BaseHttp
     /**
      * 子类可以继承此方法得到失败时的错误信息，用于Toast提示
      */
-    protected void onHttpFailed(Object tag, String msg) {
-    }
-
-    void onHttpFailed(String msg) {
-        if (LogMgr.DEBUG) {
-            showToast(getClass().getSimpleName() + ": " + msg);
-        }
+    protected void onHttpFailed(Object tag, JoyError error) {
     }
 
     protected final RetroRequestQueue getLauncher() {
