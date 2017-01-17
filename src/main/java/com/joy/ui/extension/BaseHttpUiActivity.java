@@ -130,9 +130,7 @@ public abstract class BaseHttpUiActivity<T> extends com.joy.ui.activity.BaseHttp
                     return;
                 }
                 super.onError(tag, error);
-                if (LogMgr.DEBUG) {
-                    showToast(getClass().getSimpleName() + ": " + error.getMessage());
-                }
+                onHttpFailed(error.getMessage());
                 hideLoading();
                 hideContent();
                 showErrorTip();
@@ -151,6 +149,12 @@ public abstract class BaseHttpUiActivity<T> extends com.joy.ui.activity.BaseHttp
      * 子类可以继承此方法得到失败时的错误信息，用于Toast提示
      */
     protected void onHttpFailed(Object tag, JoyError error) {
+    }
+
+    void onHttpFailed(String msg) {
+        if (LogMgr.DEBUG) {
+            showToast(getClass().getSimpleName() + ": " + msg);
+        }
     }
 
     protected final RetroRequestQueue getLauncher() {
