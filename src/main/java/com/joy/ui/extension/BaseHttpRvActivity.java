@@ -13,6 +13,7 @@ import android.view.ViewGroup.LayoutParams;
 
 import com.joy.http.RequestMode;
 import com.joy.http.volley.ObjectRequest;
+import com.joy.ui.RefreshMode;
 import com.joy.ui.adapter.ExRvAdapter;
 import com.joy.ui.view.JLoadingView;
 import com.joy.ui.view.OnLoadMoreListener;

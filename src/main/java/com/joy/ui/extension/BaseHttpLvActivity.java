@@ -12,6 +12,7 @@ import android.widget.ListView;
 
 import com.joy.http.RequestMode;
 import com.joy.http.volley.ObjectRequest;
+import com.joy.ui.RefreshMode;
 import com.joy.ui.adapter.ExLvAdapter;
 import com.joy.ui.view.JListView;
 import com.joy.ui.view.JLoadingView;

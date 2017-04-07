@@ -6,7 +6,6 @@ import com.joy.http.RequestMode;
 import com.joy.http.ResponseListener;
 import com.joy.http.ResponseListenerImpl;
 import com.joy.http.volley.ObjectRequest;
-import com.joy.http.volley.RetroRequestQueue;
 import com.joy.utils.LogMgr;
 
 import rx.Observable;
@@ -24,7 +23,7 @@ import static com.joy.http.RequestMode.REFRESH_ONLY;
  */
 public abstract class BaseHttpUiActivity<T> extends com.joy.ui.activity.BaseHttpUiActivity {
 
-    private ObjectRequest<T> mObjReq;
+    private ObjectRequest<T> mRequest;
     private boolean mContentHasDisplayed;
 
     @Override
@@ -41,21 +40,21 @@ public abstract class BaseHttpUiActivity<T> extends com.joy.ui.activity.BaseHttp
     }
 
     protected final RequestMode getRequestMode() {
-        return mObjReq != null ? mObjReq.getRequestMode() : REFRESH_ONLY;
+        return mRequest != null ? mRequest.getRequestMode() : REFRESH_ONLY;
     }
 
     protected final boolean isReqHasCache() {
-        return mObjReq != null && mObjReq.hasCache();
+        return mRequest != null && mRequest.hasCache();
     }
 
     final boolean isFinalResponse() {
-        return mObjReq != null && mObjReq.isFinalResponse();
+        return mRequest != null && mRequest.isFinalResponse();
     }
 
     protected final void cancelLauncher() {
-        if (mObjReq != null) {
-            mObjReq.cancel();
-            mObjReq = null;
+        if (mRequest != null) {
+            mRequest.cancel();
+            mRequest = null;
         }
     }
 
@@ -89,10 +88,10 @@ public abstract class BaseHttpUiActivity<T> extends com.joy.ui.activity.BaseHttp
 
     final Observable<T> launch(RequestMode mode) {
         cancelLauncher();
-        mObjReq = getRequest();
-        mObjReq.setRequestMode(mode);
-        mObjReq.setResponseListener(getResponseListener());
-        return getLauncher().launch(mObjReq, mode);
+        mRequest = getRequest();
+        mRequest.setRequestMode(mode);
+        mRequest.setResponseListener(getResponseListener());
+        return JoyHttp.getLauncher().launch(mRequest, mode);
     }
 
     private ResponseListener<T> getResponseListener() {
@@ -157,17 +156,13 @@ public abstract class BaseHttpUiActivity<T> extends com.joy.ui.activity.BaseHttp
         }
     }
 
-    protected final RetroRequestQueue getLauncher() {
-        return JoyHttp.getLauncher();
-    }
-
     protected abstract ObjectRequest<T> getRequest();
 
     protected final void cancelLauncher(Object tag) {
-        getLauncher().cancelLauncher(tag);
+        JoyHttp.getLauncher().cancelLauncher(tag);
     }
 
-    protected final void cancelAllLauncher() {
-        getLauncher().cancelAllLauncher();
+    protected final void cancelAllLaunchers() {
+        JoyHttp.getLauncher().cancelAllLauncher();
     }
 }
