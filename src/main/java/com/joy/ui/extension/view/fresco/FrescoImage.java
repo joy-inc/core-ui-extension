@@ -12,24 +12,38 @@ import com.facebook.drawee.backends.pipeline.Fresco;
 import com.facebook.drawee.interfaces.DraweeController;
 import com.facebook.drawee.view.SimpleDraweeView;
 import com.facebook.imagepipeline.common.ResizeOptions;
+import com.facebook.imagepipeline.core.ImagePipelineConfig;
+import com.facebook.imagepipeline.decoder.SimpleProgressiveJpegConfig;
 import com.facebook.imagepipeline.request.ImageRequest;
 import com.facebook.imagepipeline.request.ImageRequestBuilder;
 
 /**
  * Created by KEVIN.DAI on 16/1/4.
  */
-public class FrescoIv extends SimpleDraweeView {
+public class FrescoImage extends SimpleDraweeView {
 
-    public FrescoIv(Context context) {
+    public FrescoImage(Context context) {
         super(context);
     }
 
-    public FrescoIv(Context context, AttributeSet attrs) {
+    public FrescoImage(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
-    public FrescoIv(Context context, AttributeSet attrs, int defStyle) {
+    public FrescoImage(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+    }
+
+    public static void initialize(Context appContext) {
+        ImagePipelineConfig config = ImagePipelineConfig.newBuilder(appContext)
+//                .setProgressiveJpegConfig(new SimpleProgressiveJpegConfig())// JPG渐进式加载
+                .setDownsampleEnabled(true)
+                .build();
+        Fresco.initialize(appContext, config);
+    }
+
+    public static void shutdown() {
+        Fresco.shutDown();
     }
 
     /**

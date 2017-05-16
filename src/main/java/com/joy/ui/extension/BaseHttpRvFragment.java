@@ -8,7 +8,9 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.Adapter;
 import android.support.v7.widget.RecyclerView.LayoutManager;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 
 import com.joy.http.RequestMode;
@@ -28,12 +30,13 @@ import rx.Observable;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
 /**
- * Created by KEVIN.DAI on 15/7/16.
+ * Created by Daisw on 2017/5/16.
  *
  * @param <T>
- * @See {@link BaseHttpLvActivity<T>}.
+ * @See {@link BaseHttpLvFragment<T>}.
  */
-public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
+
+public abstract class BaseHttpRvFragment<T> extends BaseHttpUiFragment<T> {
 
     private static final int PAGE_UPPER_LIMIT = 20;// 默认分页大小
     private static final int PAGE_START_INDEX = 1;// 默认起始页码
@@ -45,11 +48,12 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
     private RefreshMode mRefreshMode;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View v = super.onCreateView(inflater, container, savedInstanceState);
         mRecyclerView = provideRecyclerView();
         mRecyclerView.setLayoutManager(provideLayoutManager());
         setContentView(wrapSwipeRefresh(mRecyclerView));
+        return v;
     }
 
     /**
@@ -59,7 +63,7 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
      */
     protected RecyclerView provideRecyclerView() {
         JRecyclerView jrv = inflateLayout(R.layout.lib_view_recycler);
-        jrv.setLoadMoreView(JLoadingView.getLoadMore(this));
+        jrv.setLoadMoreView(JLoadingView.getLoadMore(getActivity()));
         jrv.setOnLoadMoreListener(getOnLoadMoreListener());
         return jrv;
     }
@@ -73,11 +77,11 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
      * @return 自定义的LayoutManager
      */
     protected LayoutManager provideLayoutManager() {
-        return new LinearLayoutManager(this);
+        return new LinearLayoutManager(getActivity());
     }
 
     private View wrapSwipeRefresh(View contentView) {
-        mSwipeRl = new SwipeRefreshLayout(this);
+        mSwipeRl = new SwipeRefreshLayout(getActivity());
         mSwipeRl.setColorSchemeResources(R.color.color_accent);
         mSwipeRl.setOnRefreshListener(getOnRefreshListener());
         mSwipeRl.addView(contentView, new LayoutParams(MATCH_PARENT, MATCH_PARENT));

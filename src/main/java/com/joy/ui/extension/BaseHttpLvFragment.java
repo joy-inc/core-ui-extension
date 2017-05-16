@@ -4,21 +4,21 @@ import android.os.Bundle;
 import android.support.annotation.ColorRes;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v4.widget.SwipeRefreshLayout.OnRefreshListener;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.RecyclerView.Adapter;
-import android.support.v7.widget.RecyclerView.LayoutManager;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
+import android.widget.HeaderViewListAdapter;
+import android.widget.ListAdapter;
+import android.widget.ListView;
 
 import com.joy.http.RequestMode;
 import com.joy.http.volley.ObjectRequest;
 import com.joy.ui.RefreshMode;
-import com.joy.ui.adapter.ExRvAdapter;
+import com.joy.ui.adapter.ExLvAdapter;
+import com.joy.ui.view.JListView;
 import com.joy.ui.view.JLoadingView;
 import com.joy.ui.view.LoadMore;
-import com.joy.ui.view.recyclerview.JRecyclerView;
-import com.joy.ui.view.recyclerview.RecyclerAdapter;
 import com.joy.utils.CollectionUtil;
 
 import java.util.List;
@@ -28,68 +28,49 @@ import rx.Observable;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
 /**
- * Created by KEVIN.DAI on 15/7/16.
+ * Created by Daisw on 2017/5/16.
  *
  * @param <T>
- * @See {@link BaseHttpLvActivity<T>}.
+ * @See {@link BaseHttpRvActivity<T>}.
  */
-public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
+
+public abstract class BaseHttpLvFragment<T> extends BaseHttpUiFragment<T> {
 
     private static final int PAGE_UPPER_LIMIT = 20;// 默认分页大小
     private static final int PAGE_START_INDEX = 1;// 默认起始页码
     private SwipeRefreshLayout mSwipeRl;
-    private RecyclerView mRecyclerView;
+    private ListView mListView;
     private int mPageLimit = PAGE_UPPER_LIMIT;
     private int mPageIndex = PAGE_START_INDEX;
     private int mSortIndex = mPageIndex;
     private RefreshMode mRefreshMode;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        mRecyclerView = provideRecyclerView();
-        mRecyclerView.setLayoutManager(provideLayoutManager());
-        setContentView(wrapSwipeRefresh(mRecyclerView));
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View v = super.onCreateView(inflater, container, savedInstanceState);
+        mListView = provideListView();
+        setContentView(wrapSwipeRefresh(mListView));
+        return v;
     }
 
     /**
-     * 子类可以复写此方法，为自己定制RecyclerView
+     * 子类可以复写此方法，为自己定制ListView
      *
-     * @return 自定义的RecyclerView
+     * @return 自定义的ListView
      */
-    protected RecyclerView provideRecyclerView() {
-        JRecyclerView jrv = inflateLayout(R.layout.lib_view_recycler);
-        jrv.setLoadMoreView(JLoadingView.getLoadMore(this));
-        jrv.setOnLoadMoreListener(getOnLoadMoreListener());
-        return jrv;
-    }
-
-    /**
-     * 子类可以复写此方法，为自己定制LayoutManager，默认为LinearLayoutManager
-     * LinearLayoutManager (线性显示，类似于ListView)
-     * GridLayoutManager (线性宫格显示，类似于GridView)
-     * StaggeredGridLayoutManager(线性宫格显示，类似于瀑布流)
-     *
-     * @return 自定义的LayoutManager
-     */
-    protected LayoutManager provideLayoutManager() {
-        return new LinearLayoutManager(this);
+    protected ListView provideListView() {
+        JListView jlv = inflateLayout(R.layout.lib_view_listview);
+        jlv.setLoadMoreView(JLoadingView.getLoadMore(getActivity()));
+        jlv.setOnLoadMoreListener(getOnLoadMoreListener());
+        return jlv;
     }
 
     private View wrapSwipeRefresh(View contentView) {
-        mSwipeRl = new SwipeRefreshLayout(this);
+        mSwipeRl = new SwipeRefreshLayout(getActivity());
         mSwipeRl.setColorSchemeResources(R.color.color_accent);
         mSwipeRl.setOnRefreshListener(getOnRefreshListener());
         mSwipeRl.addView(contentView, new LayoutParams(MATCH_PARENT, MATCH_PARENT));
         return mSwipeRl;
-    }
-
-    protected final RecyclerView getRecyclerView() {
-        return mRecyclerView;
-    }
-
-    protected final LayoutManager getLayoutManager() {
-        return mRecyclerView.getLayoutManager();
     }
 
     private void setRefreshMode(RefreshMode mode) {
@@ -114,7 +95,7 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
         return (isAuto) -> {
             if (isNetworkEnable()) {
                 if (mPageIndex == PAGE_START_INDEX) {
-                    if (getAdapter().getItemCount() == mPageLimit) {
+                    if (getAdapter().getCount() == mPageLimit) {
                         mPageIndex++;
                     } else {
                         mPageIndex = mSortIndex;
@@ -211,65 +192,61 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
         return mPageIndex;
     }
 
+    protected final ListView getListView() {
+        return mListView;
+    }
+
     protected final int getHeaderViewsCount() {
-        return ((RecyclerAdapter) mRecyclerView.getAdapter()).getHeadersCount();
+        return mListView.getHeaderViewsCount();
     }
 
     protected final int getFooterViewsCount() {
-        return ((RecyclerAdapter) mRecyclerView.getAdapter()).getFootersCount();
+        return mListView.getFooterViewsCount();
     }
 
     protected final void addHeaderView(View v) {
-        Adapter adapter = mRecyclerView.getAdapter();
-        if (adapter == null)
-            throw new IllegalStateException(
-                    "Cannot add header view to recycler -- setAdapter has not been called.");
-        ((RecyclerAdapter) adapter).addHeaderView(v);
+        mListView.addHeaderView(v);
     }
 
     protected final void addFooterView(View v) {
-        Adapter adapter = mRecyclerView.getAdapter();
-        if (adapter == null)
-            throw new IllegalStateException(
-                    "Cannot add footer view to recycler -- setAdapter has not been called.");
-        ((RecyclerAdapter) adapter).addFooterView(v);
+        mListView.addFooterView(v);
     }
 
     protected final void removeHeaderView(View v) {
-        ((RecyclerAdapter) mRecyclerView.getAdapter()).removeHeader(v);
+        mListView.removeHeaderView(v);
     }
 
     protected final void removeFooterView(View v) {
-        ((RecyclerAdapter) mRecyclerView.getAdapter()).removeFooter(v);
+        mListView.removeFooterView(v);
     }
 
-    protected final void setAdapter(ExRvAdapter adapter) {
-        mRecyclerView.setAdapter(new RecyclerAdapter(adapter, getLayoutManager()));
+    protected final void setAdapter(ExLvAdapter adapter) {
+        mListView.setAdapter(adapter);
     }
 
-    protected final ExRvAdapter getAdapter() {
-        Adapter adapter = mRecyclerView.getAdapter();
-        if (adapter instanceof RecyclerAdapter) {
-            return (ExRvAdapter) ((RecyclerAdapter) adapter).getWrappedAdapter();
+    protected final ExLvAdapter getAdapter() {
+        ListAdapter adapter = mListView.getAdapter();
+        if (adapter instanceof HeaderViewListAdapter) {
+            return (ExLvAdapter) ((HeaderViewListAdapter) adapter).getWrappedAdapter();
         } else {
-            return (ExRvAdapter) adapter;
+            return (ExLvAdapter) adapter;
         }
     }
 
     @Override
     protected boolean invalidateContent(T t) {
-        ExRvAdapter adapter = getAdapter();
+        ExLvAdapter adapter = getAdapter();
         if (adapter == null) {
             return false;
         }
-        final int adapterItemCount = adapter.getItemCount();
+        final int adapterItemCount = adapter.getCount();
         List<?> ts = getListInvalidateContent(t);
         final int currentItemCount = CollectionUtil.size(ts);
         if (currentItemCount == 0) {
             if (mPageIndex == PAGE_START_INDEX) {
                 if (adapterItemCount > 0) {
                     adapter.clear();
-                    adapter.notifyItemRangeRemoved(0, adapterItemCount);
+                    adapter.notifyDataSetChanged();
                 }
                 return false;
             } else {
@@ -283,16 +260,15 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
         if (mPageIndex == PAGE_START_INDEX) {
             adapter.setData(ts);
             if (adapterItemCount == 0) {
-                adapter.notifyItemRangeInserted(0, currentItemCount);
+                adapter.notifyDataSetChanged();
                 addLoadMoreIfNecessary();
             } else {
-                adapter.notifyItemRangeRemoved(0, adapterItemCount);
-                adapter.notifyItemRangeInserted(0, currentItemCount);// TODO 可以合并成adapter.notifyItemRangeChanged(0, adapterItemCount);
-                getLayoutManager().scrollToPosition(0);
+                adapter.notifyDataSetChanged();
+                mListView.smoothScrollToPosition(0);
             }
         } else {
             adapter.addAll(ts);
-            adapter.notifyItemRangeInserted(adapterItemCount, currentItemCount);
+            adapter.notifyDataSetChanged();
         }
         if (isFinalResponse()) {
             mPageIndex++;
@@ -343,13 +319,13 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
     }
 
     @Override
-    public final void showErrorTip() {
+    public void showErrorTip() {
         switch (mRefreshMode) {
             case SWIPE:
                 showToast(R.string.toast_common_timeout);
                 break;
             case FRAME:
-                if (getAdapter().getItemCount() == 0) {
+                if (getAdapter().getCount() == 0) {
                     super.showErrorTip();
                 }
                 break;
@@ -362,15 +338,15 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
     }
 
     @Override
-    public final void showEmptyTip() {
-        if ((mRefreshMode == RefreshMode.SWIPE || mRefreshMode == RefreshMode.FRAME) && getAdapter().getItemCount() == 0) {
+    public void showEmptyTip() {
+        if ((mRefreshMode == RefreshMode.SWIPE || mRefreshMode == RefreshMode.FRAME) && getAdapter().getCount() == 0) {
             super.showEmptyTip();
         }
     }
 
     @Override
-    public final void hideContent() {
-        if ((mRefreshMode == RefreshMode.SWIPE || mRefreshMode == RefreshMode.FRAME) && getAdapter().getItemCount() == 0) {
+    public void hideContent() {
+        if ((mRefreshMode == RefreshMode.SWIPE || mRefreshMode == RefreshMode.FRAME) && getAdapter().getCount() == 0) {
             super.hideContent();
         }
     }
@@ -382,6 +358,7 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
         return mSwipeRl;
     }
 
+
     protected final void setSwipeRefreshEnable(boolean enable) {
         mSwipeRl.setEnabled(enable);
     }
@@ -390,8 +367,8 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
         return mSwipeRl.isRefreshing();
     }
 
-    protected final void setOnRefreshListener(OnRefreshListener listener) {
-        mSwipeRl.setOnRefreshListener(listener);
+    protected final void setOnRefreshListener(OnRefreshListener lisn) {
+        mSwipeRl.setOnRefreshListener(lisn);
     }
 
     protected final void showSwipeRefresh() {
@@ -406,8 +383,8 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
         }
     }
 
-    protected final void setSwipeRefreshColors(@ColorRes int... resIds) {
-        mSwipeRl.setColorSchemeResources(resIds);
+    protected final void setSwipeRefreshColors(@ColorRes int... colorResIds) {
+        mSwipeRl.setColorSchemeResources(colorResIds);
     }
     // =============================================================================================
 
@@ -415,46 +392,46 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
     // load more
     // =============================================================================================
     protected final void setLoadMoreEnable(boolean enable) {
-        if (mRecyclerView instanceof JRecyclerView) {
-            ((JRecyclerView) mRecyclerView).setLoadMoreEnable(enable);
+        if (mListView instanceof JListView) {
+            ((JListView) mListView).setLoadMoreEnable(enable);
         }
     }
 
     protected final boolean isLoadMoreEnable() {
-        return mRecyclerView instanceof JRecyclerView && ((JRecyclerView) mRecyclerView).isLoadMoreEnable();
+        return mListView instanceof JListView && ((JListView) mListView).isLoadMoreEnable();
     }
 
     protected final void addLoadMoreIfNecessary() {
         if (isLoadMoreEnable()) {
-            ((JRecyclerView) mRecyclerView).addLoadMoreIfNotExist();
+            ((JListView) mListView).addLoadMoreIfNotExist();
         }
     }
 
     protected final boolean isLoadingMore() {
-        return isLoadMoreEnable() && ((JRecyclerView) mRecyclerView).isLoadingMore();
+        return isLoadMoreEnable() && ((JListView) mListView).isLoadingMore();
     }
 
     protected final void setOnLoadMoreListener(LoadMore.OnLoadMoreListener listener) {
         if (isLoadMoreEnable()) {
-            ((JRecyclerView) mRecyclerView).setOnLoadMoreListener(listener);
+            ((JListView) mListView).setOnLoadMoreListener(listener);
         }
     }
 
     protected final void stopLoadMore() {
         if (isLoadMoreEnable()) {
-            ((JRecyclerView) mRecyclerView).stopLoadMore();
+            ((JListView) mListView).stopLoadMore();
         }
     }
 
     protected final void setLoadMoreFailed() {
         if (isLoadMoreEnable()) {
-            ((JRecyclerView) mRecyclerView).setLoadMoreFailed();
+            ((JListView) mListView).setLoadMoreFailed();
         }
     }
 
     protected final void hideLoadMore() {
         if (isLoadMoreEnable()) {
-            ((JRecyclerView) mRecyclerView).hideLoadMore();
+            ((JListView) mListView).hideLoadMore();
         }
     }
 
@@ -462,10 +439,10 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
         if (isLoadMoreEnable()) {
             switch (theme) {
                 case LIGHT:
-                    ((JRecyclerView) mRecyclerView).setLoadMoreLightTheme();
+                    ((JListView) mListView).setLoadMoreLightTheme();
                     break;
                 case DARK:
-                    ((JRecyclerView) mRecyclerView).setLoadMoreDarkTheme();
+                    ((JListView) mListView).setLoadMoreDarkTheme();
                     break;
                 default:
                     break;
@@ -475,7 +452,7 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
 
     protected final void setLoadMoreHintColor(@ColorRes int resId) {
         if (isLoadMoreEnable()) {
-            ((JRecyclerView) mRecyclerView).setLoadMoreHintTextColor(resId);
+            ((JListView) mListView).setLoadMoreHintTextColor(resId);
         }
     }
     // =============================================================================================

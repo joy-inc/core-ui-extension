@@ -22,7 +22,7 @@ public class BaseHttpUiPresenter<T, V extends BaseViewNet> extends PresenterImpl
 //    @Override
 //    public Observable<T> launch(ObjectRequest<T> request, RequestMode mode) {
 //        if (request == null) {
-//            throw new NullPointerException("You need override the getObjectRequest() method.");
+//            throw new NullPointerException("You need override the getRequest() method.");
 //        }
 //        cancel();
 //        mRequest = request;
@@ -90,25 +90,25 @@ public class BaseHttpUiPresenter<T, V extends BaseViewNet> extends PresenterImpl
 
     public Observable<T> launchRefreshOnly(String... params) {
         setParams(params);
-        return JoyHttp.getLauncher().launchRefreshOnly(getObjectRequest(params));
+        return JoyHttp.getLauncher().launchRefreshOnly(getRequest(params));
     }
 
     public Observable<T> launchCacheOnly(String... params) {
         setParams(params);
-        return JoyHttp.getLauncher().launchCacheOnly(getObjectRequest(params));
+        return JoyHttp.getLauncher().launchCacheOnly(getRequest(params));
     }
 
     public Observable<T> launchRefreshAndCache(String... params) {
         setParams(params);
-        return JoyHttp.getLauncher().launchRefreshAndCache(getObjectRequest(params));
+        return JoyHttp.getLauncher().launchRefreshAndCache(getRequest(params));
     }
 
     public Observable<T> launchCacheAndRefresh(String... params) {
         setParams(params);
-        return JoyHttp.getLauncher().launchCacheAndRefresh(getObjectRequest(params));
+        return JoyHttp.getLauncher().launchCacheAndRefresh(getRequest(params));
     }
 
-    protected ObjectRequest<T> getObjectRequest(String... params) {
+    protected ObjectRequest<T> getRequest(String... params) {
         return null;
     }
 

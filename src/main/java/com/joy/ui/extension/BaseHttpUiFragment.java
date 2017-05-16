@@ -15,18 +15,19 @@ import static com.joy.http.RequestMode.REFRESH_AND_CACHE;
 import static com.joy.http.RequestMode.REFRESH_ONLY;
 
 /**
- * Created by KEVIN.DAI on 15/7/10.
+ * Created by Daisw on 2017/5/16.
  *
  * @param <T>
- * @See {@link com.joy.ui.activity.BaseHttpUiActivity}.
+ * @See {@link com.joy.ui.fragment.BaseHttpUiFragment}.
  */
-public abstract class BaseHttpUiActivity<T> extends com.joy.ui.activity.BaseHttpUiActivity {
+
+public abstract class BaseHttpUiFragment<T> extends com.joy.ui.fragment.BaseHttpUiFragment {
 
     private ObjectRequest<T> mRequest;
     private boolean isContentDisplayed;
 
     @Override
-    protected void onPause() {
+    public void onPause() {
         super.onPause();
         if (isFinishing()) {
             cancelLauncher();

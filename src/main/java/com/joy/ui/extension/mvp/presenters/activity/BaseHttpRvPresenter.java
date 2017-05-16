@@ -2,7 +2,6 @@ package com.joy.ui.extension.mvp.presenters.activity;
 
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v4.widget.SwipeRefreshLayout.OnRefreshListener;
-import android.support.v7.widget.RecyclerView;
 
 import com.joy.http.JoyHttp;
 import com.joy.http.RequestMode;
@@ -11,8 +10,7 @@ import com.joy.ui.R;
 import com.joy.ui.RefreshMode;
 import com.joy.ui.activity.interfaces.BaseViewNetRv;
 import com.joy.ui.adapter.ExRvAdapter;
-import com.joy.ui.view.OnLoadMoreListener;
-import com.joy.ui.view.recyclerview.JRecyclerView;
+import com.joy.ui.view.LoadMore;
 
 import java.util.List;
 
@@ -32,21 +30,17 @@ public class BaseHttpRvPresenter<T, V extends BaseViewNetRv> extends BaseHttpUiP
     @Override
     public void attachView(V v) {
         super.attachView(v);
-        getBaseView().getSwipeRefreshLayout().setOnRefreshListener(getRefreshLisn());
-        RecyclerView rv = getBaseView().getRecyclerView();
-        if (rv instanceof JRecyclerView) {
-            JRecyclerView jrv = (JRecyclerView) rv;
-            jrv.setLoadMoreListener(getLoadMoreLisn());
-        }
+        getBaseView().setOnRefreshListener(getOnRefreshListener());
+        getBaseView().setOnLoadMoreListener(getOnLoadMoreListener());
     }
 
-    private OnRefreshListener getRefreshLisn() {
+    private OnRefreshListener getOnRefreshListener() {
         return () -> {
             if (getBaseView().isNetworkEnable()) {
                 mSortIndex = mPageIndex;
                 setPageIndex(PAGE_START_INDEX);
                 getBaseView().setRefreshMode(RefreshMode.SWIPE);
-                launch(getObjectRequest(getParams()), RequestMode.REFRESH_ONLY);// refresh only, don't cache
+                launch(getRequest(getParams()), RequestMode.REFRESH_ONLY);// refresh only, don't cache
             } else {
                 getBaseView().hideSwipeRefresh();
                 getBaseView().showToast(R.string.toast_common_no_network);
@@ -54,7 +48,7 @@ public class BaseHttpRvPresenter<T, V extends BaseViewNetRv> extends BaseHttpUiP
         };
     }
 
-    private OnLoadMoreListener getLoadMoreLisn() {
+    private LoadMore.OnLoadMoreListener getOnLoadMoreListener() {
         return isAuto -> {
             if (getBaseView().isNetworkEnable()) {
                 if (mPageIndex == PAGE_START_INDEX) {
@@ -65,7 +59,7 @@ public class BaseHttpRvPresenter<T, V extends BaseViewNetRv> extends BaseHttpUiP
                     }
                 }
                 getBaseView().setRefreshMode(RefreshMode.LOADMORE);
-                launch(getObjectRequest(getParams()), RequestMode.REFRESH_ONLY);// refresh only, don't cache
+                launch(getRequest(getParams()), RequestMode.REFRESH_ONLY);// refresh only, don't cache
             } else {
                 getBaseView().setLoadMoreFailed();
                 if (!isAuto) {
@@ -104,19 +98,20 @@ public class BaseHttpRvPresenter<T, V extends BaseViewNetRv> extends BaseHttpUiP
     @Override
     public void onEmpty() {
         ExRvAdapter adapter = getBaseView().getAdapter();
-        if (adapter != null) {
-            if (mPageIndex == PAGE_START_INDEX) {
-                final int adapterItemCount = adapter.getItemCount();
-                if (adapterItemCount > 0) {
-                    adapter.clear();
-                    adapter.notifyItemRangeRemoved(0, adapterItemCount);
-                }
-            } else {
-                getBaseView().setLoadMoreEnable(false);
-                return;
-            }
+        if (adapter == null) {
+            super.onEmpty();
+            return;
         }
-        super.onEmpty();
+        if (mPageIndex == PAGE_START_INDEX) {
+            final int adapterItemCount = adapter.getItemCount();
+            if (adapterItemCount > 0) {
+                adapter.clear();
+                adapter.notifyItemRangeRemoved(0, adapterItemCount);
+            }
+            super.onEmpty();
+        } else {
+            getBaseView().setLoadMoreEnable(false);
+        }
     }
 
     public void onNext(List<?> ts) {
@@ -130,9 +125,7 @@ public class BaseHttpRvPresenter<T, V extends BaseViewNetRv> extends BaseHttpUiP
                 adapter.setData(ts);
                 if (adapterItemCount == 0) {
                     adapter.notifyItemRangeInserted(0, currentItemCount);
-                    if (getBaseView().isLoadMoreEnable()) {
-                        ((JRecyclerView) getBaseView().getRecyclerView()).addLoadMoreIfNotExist();
-                    }
+                    getBaseView().addLoadMoreIfNecessary();
                 } else {
                     adapter.notifyItemRangeRemoved(0, adapterItemCount);
                     adapter.notifyItemRangeInserted(0, currentItemCount);// TODO 可以合并成adapter.notifyItemRangeChanged(0, adapterItemCount);
@@ -174,7 +167,7 @@ public class BaseHttpRvPresenter<T, V extends BaseViewNetRv> extends BaseHttpUiP
     public final Observable<T> launchCacheAndRefresh(String... params) {
         setParams(params);
         setPageIndex(PAGE_START_INDEX);
-        ObjectRequest<T> req = getObjectRequest(params);
+        ObjectRequest<T> req = getRequest(params);
         getBaseView().setRefreshMode(req.hasCache() ? RefreshMode.SWIPE : RefreshMode.FRAME);
         return launch(req, RequestMode.CACHE_AND_REFRESH);
     }
@@ -186,7 +179,7 @@ public class BaseHttpRvPresenter<T, V extends BaseViewNetRv> extends BaseHttpUiP
         setParams(params);
         setPageIndex(PAGE_START_INDEX);
         getBaseView().setRefreshMode(RefreshMode.SWIPE);
-        launch(getObjectRequest(params), getRequestMode());
+        launch(getRequest(params), getRequestMode());
     }
 
     /**
@@ -196,7 +189,7 @@ public class BaseHttpRvPresenter<T, V extends BaseViewNetRv> extends BaseHttpUiP
         setParams(params);
         setPageIndex(PAGE_START_INDEX);
         getBaseView().setRefreshMode(RefreshMode.FRAME);
-        launch(getObjectRequest(params), getRequestMode());
+        launch(getRequest(params), getRequestMode());
     }
 
     /**

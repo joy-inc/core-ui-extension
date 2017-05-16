@@ -16,7 +16,7 @@ import com.joy.ui.RefreshMode;
 import com.joy.ui.adapter.ExLvAdapter;
 import com.joy.ui.view.JListView;
 import com.joy.ui.view.JLoadingView;
-import com.joy.ui.view.OnLoadMoreListener;
+import com.joy.ui.view.LoadMore;
 import com.joy.utils.CollectionUtil;
 
 import java.util.List;
@@ -35,7 +35,7 @@ public abstract class BaseHttpLvActivity<T> extends BaseHttpUiActivity<T> {
 
     private static final int PAGE_UPPER_LIMIT = 20;// 默认分页大小
     private static final int PAGE_START_INDEX = 1;// 默认起始页码
-    private SwipeRefreshLayout mSwipeRefreshWidget;
+    private SwipeRefreshLayout mSwipeRl;
     private ListView mListView;
     private int mPageLimit = PAGE_UPPER_LIMIT;
     private int mPageIndex = PAGE_START_INDEX;
@@ -45,7 +45,7 @@ public abstract class BaseHttpLvActivity<T> extends BaseHttpUiActivity<T> {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mListView = getDefaultListView();
+        mListView = provideListView();
         setContentView(wrapSwipeRefresh(mListView));
     }
 
@@ -54,28 +54,32 @@ public abstract class BaseHttpLvActivity<T> extends BaseHttpUiActivity<T> {
      *
      * @return 自定义的ListView
      */
-    protected ListView getDefaultListView() {
+    protected ListView provideListView() {
         JListView jlv = inflateLayout(R.layout.lib_view_listview);
         jlv.setLoadMoreView(JLoadingView.getLoadMore(this));
-        jlv.setLoadMoreListener(getDefaultLoadMoreLisn());
+        jlv.setOnLoadMoreListener(getOnLoadMoreListener());
         return jlv;
     }
 
     private View wrapSwipeRefresh(View contentView) {
-        mSwipeRefreshWidget = new SwipeRefreshLayout(this);
-        mSwipeRefreshWidget.setColorSchemeResources(R.color.color_accent);
-        mSwipeRefreshWidget.setOnRefreshListener(getDefaultRefreshLisn());
-        mSwipeRefreshWidget.addView(contentView, new LayoutParams(MATCH_PARENT, MATCH_PARENT));
-        return mSwipeRefreshWidget;
+        mSwipeRl = new SwipeRefreshLayout(this);
+        mSwipeRl.setColorSchemeResources(R.color.color_accent);
+        mSwipeRl.setOnRefreshListener(getOnRefreshListener());
+        mSwipeRl.addView(contentView, new LayoutParams(MATCH_PARENT, MATCH_PARENT));
+        return mSwipeRl;
     }
 
-    private OnRefreshListener getDefaultRefreshLisn() {
+    private void setRefreshMode(RefreshMode mode) {
+        mRefreshMode = mode;
+    }
+
+    private OnRefreshListener getOnRefreshListener() {
         return () -> {
             if (isNetworkEnable()) {
                 mSortIndex = mPageIndex;
-                setRefreshMode(RefreshMode.SWIPE);
                 setPageIndex(PAGE_START_INDEX);
-                launch(RequestMode.REFRESH_ONLY);
+                setRefreshMode(RefreshMode.SWIPE);
+                launchRefreshOnly();
             } else {
                 hideSwipeRefresh();
                 showToast(R.string.toast_common_no_network);
@@ -83,7 +87,7 @@ public abstract class BaseHttpLvActivity<T> extends BaseHttpUiActivity<T> {
         };
     }
 
-    private OnLoadMoreListener getDefaultLoadMoreLisn() {
+    private LoadMore.OnLoadMoreListener getOnLoadMoreListener() {
         return (isAuto) -> {
             if (isNetworkEnable()) {
                 if (mPageIndex == PAGE_START_INDEX) {
@@ -94,7 +98,7 @@ public abstract class BaseHttpLvActivity<T> extends BaseHttpUiActivity<T> {
                     }
                 }
                 setRefreshMode(RefreshMode.LOADMORE);
-                launch(RequestMode.REFRESH_ONLY);
+                launchRefreshOnly();
             } else {
                 setLoadMoreFailed();
                 if (!isAuto) {
@@ -113,38 +117,39 @@ public abstract class BaseHttpLvActivity<T> extends BaseHttpUiActivity<T> {
 
     @Override
     protected final Observable<T> launchRefreshOnly() {
-        setRefreshMode(RefreshMode.FRAME);
         setPageIndex(PAGE_START_INDEX);
+        setRefreshMode(RefreshMode.FRAME);
         return super.launchRefreshOnly();
     }
 
     @Override
     protected final Observable<T> launchCacheOnly() {
-        setRefreshMode(RefreshMode.FRAME);
         setPageIndex(PAGE_START_INDEX);
+        setRefreshMode(RefreshMode.FRAME);
         return super.launchCacheOnly();
     }
 
     @Override
     protected final Observable<T> launchRefreshAndCache() {
-        setRefreshMode(RefreshMode.FRAME);
         setPageIndex(PAGE_START_INDEX);
+        setRefreshMode(RefreshMode.FRAME);
         return super.launchRefreshAndCache();
     }
 
     @Override
     protected final Observable<T> launchCacheAndRefresh() {
-        setRefreshMode(RefreshMode.FRAME);
         setPageIndex(PAGE_START_INDEX);
-        return super.launchCacheAndRefresh();
+        ObjectRequest<T> req = getRequest();
+        setRefreshMode(req.hasCache() ? RefreshMode.SWIPE : RefreshMode.FRAME);
+        return launch(req, RequestMode.CACHE_AND_REFRESH);
     }
 
     /**
      * show swipe refresh view {@link SwipeRefreshLayout}
      */
     protected final void launchSwipeRefresh() {
-        setRefreshMode(RefreshMode.SWIPE);
         setPageIndex(PAGE_START_INDEX);
+        setRefreshMode(RefreshMode.SWIPE);
         doOnRetry();
     }
 
@@ -152,13 +157,9 @@ public abstract class BaseHttpLvActivity<T> extends BaseHttpUiActivity<T> {
      * show frame refresh view {@link JLoadingView}
      */
     protected final void launchFrameRefresh() {
-        setRefreshMode(RefreshMode.FRAME);
         setPageIndex(PAGE_START_INDEX);
+        setRefreshMode(RefreshMode.FRAME);
         doOnRetry();
-    }
-
-    private void setRefreshMode(RefreshMode mode) {
-        mRefreshMode = mode;
     }
 
     /**
@@ -235,35 +236,34 @@ public abstract class BaseHttpLvActivity<T> extends BaseHttpUiActivity<T> {
             return false;
         }
         final int adapterItemCount = adapter.getCount();
-        List<?> datas = getListInvalidateContent(t);
-        final int currentItemCount = CollectionUtil.size(datas);
+        List<?> ts = getListInvalidateContent(t);
+        final int currentItemCount = CollectionUtil.size(ts);
         if (currentItemCount == 0) {
             if (mPageIndex == PAGE_START_INDEX) {
                 if (adapterItemCount > 0) {
                     adapter.clear();
                     adapter.notifyDataSetChanged();
                 }
+                return false;
             } else {
                 setLoadMoreEnable(false);
                 return true;
             }
-            return false;
         }
 
-        stopLoadMore();
         setLoadMoreEnable(currentItemCount >= mPageLimit);
 
         if (mPageIndex == PAGE_START_INDEX) {
-            adapter.setData(datas);
+            adapter.setData(ts);
             if (adapterItemCount == 0) {
                 adapter.notifyDataSetChanged();
-                addLoadMoreIfNotExist();
+                addLoadMoreIfNecessary();
             } else {
                 adapter.notifyDataSetChanged();
                 mListView.smoothScrollToPosition(0);
             }
         } else {
-            adapter.addAll(datas);
+            adapter.addAll(ts);
             adapter.notifyDataSetChanged();
         }
         if (isFinalResponse()) {
@@ -277,20 +277,7 @@ public abstract class BaseHttpLvActivity<T> extends BaseHttpUiActivity<T> {
     }
 
     @Override
-    final void onHttpFailed(String msg) {
-        super.onHttpFailed(msg);
-        if (isSwipeRefreshing()) {// 下拉刷新触发
-        } else if (isLoadingMore()) {// 加载更多触发
-            setLoadMoreFailed();
-        } else {// 首次加载触发
-        }
-    }
-
-    @Override
-    public final void showLoading() {// dispatch loading view
-        if (getRequestMode() == RequestMode.CACHE_AND_REFRESH && isReqHasCache()) {
-            setRefreshMode(RefreshMode.SWIPE);
-        }
+    public final void showLoading() {
         switch (mRefreshMode) {
             case SWIPE:
                 showSwipeRefresh();
@@ -305,6 +292,8 @@ public abstract class BaseHttpLvActivity<T> extends BaseHttpUiActivity<T> {
             case LOADMORE:
                 hideSwipeRefresh();
                 break;
+            default:
+                break;
         }
     }
 
@@ -317,26 +306,43 @@ public abstract class BaseHttpLvActivity<T> extends BaseHttpUiActivity<T> {
             case FRAME:
                 super.hideLoading();
                 break;
+            case LOADMORE:
+                stopLoadMore();
+                break;
+            default:
+                break;
         }
     }
 
     @Override
     public void showErrorTip() {
-        if (mRefreshMode == RefreshMode.FRAME || getAdapter().getCount() == 0) {
-            super.showErrorTip();
+        switch (mRefreshMode) {
+            case SWIPE:
+                showToast(R.string.toast_common_timeout);
+                break;
+            case FRAME:
+                if (getAdapter().getCount() == 0) {
+                    super.showErrorTip();
+                }
+                break;
+            case LOADMORE:
+                setLoadMoreFailed();
+                break;
+            default:
+                break;
         }
     }
 
     @Override
     public void showEmptyTip() {
-        if (mRefreshMode == RefreshMode.FRAME || getAdapter().getCount() == 0) {
+        if ((mRefreshMode == RefreshMode.SWIPE || mRefreshMode == RefreshMode.FRAME) && getAdapter().getCount() == 0) {
             super.showEmptyTip();
         }
     }
 
     @Override
     public void hideContent() {
-        if (mRefreshMode == RefreshMode.FRAME || getAdapter().getCount() == 0) {
+        if ((mRefreshMode == RefreshMode.SWIPE || mRefreshMode == RefreshMode.FRAME) && getAdapter().getCount() == 0) {
             super.hideContent();
         }
     }
@@ -344,51 +350,54 @@ public abstract class BaseHttpLvActivity<T> extends BaseHttpUiActivity<T> {
 
     // swipe refresh
     // =============================================================================================
-    protected void setSwipeRefreshEnable(boolean enable) {
-        mSwipeRefreshWidget.setEnabled(enable);
+    protected final SwipeRefreshLayout getSwipeRefreshLayout() {
+        return mSwipeRl;
     }
 
-    protected void setColorSchemeResources(int... colorResIds) {
-        mSwipeRefreshWidget.setColorSchemeResources(colorResIds);
+
+    protected final void setSwipeRefreshEnable(boolean enable) {
+        mSwipeRl.setEnabled(enable);
     }
 
-    protected void setOnRefreshListener(OnRefreshListener lisn) {
-        mSwipeRefreshWidget.setOnRefreshListener(lisn);
+    protected final boolean isSwipeRefreshing() {
+        return mSwipeRl.isRefreshing();
     }
 
-    protected boolean isSwipeRefreshing() {
-        return mSwipeRefreshWidget.isRefreshing();
+    protected final void setOnRefreshListener(OnRefreshListener lisn) {
+        mSwipeRl.setOnRefreshListener(lisn);
     }
 
-    protected void showSwipeRefresh() {
-        if (isSwipeRefreshing()) {
-            return;
-        }
-        mSwipeRefreshWidget.setRefreshing(true);
-    }
-
-    protected void hideSwipeRefresh() {
+    protected final void showSwipeRefresh() {
         if (!isSwipeRefreshing()) {
-            return;
+            mSwipeRl.setRefreshing(true);
         }
-        mSwipeRefreshWidget.setRefreshing(false);
+    }
+
+    protected final void hideSwipeRefresh() {
+        if (isSwipeRefreshing()) {
+            mSwipeRl.setRefreshing(false);
+        }
+    }
+
+    protected final void setSwipeRefreshColors(@ColorRes int... colorResIds) {
+        mSwipeRl.setColorSchemeResources(colorResIds);
     }
     // =============================================================================================
 
 
     // load more
     // =============================================================================================
-    protected final boolean isLoadMoreEnable() {
-        return mListView instanceof JListView && ((JListView) mListView).isLoadMoreEnable();
-    }
-
     protected final void setLoadMoreEnable(boolean enable) {
         if (mListView instanceof JListView) {
             ((JListView) mListView).setLoadMoreEnable(enable);
         }
     }
 
-    protected final void addLoadMoreIfNotExist() {
+    protected final boolean isLoadMoreEnable() {
+        return mListView instanceof JListView && ((JListView) mListView).isLoadMoreEnable();
+    }
+
+    protected final void addLoadMoreIfNecessary() {
         if (isLoadMoreEnable()) {
             ((JListView) mListView).addLoadMoreIfNotExist();
         }
@@ -396,6 +405,12 @@ public abstract class BaseHttpLvActivity<T> extends BaseHttpUiActivity<T> {
 
     protected final boolean isLoadingMore() {
         return isLoadMoreEnable() && ((JListView) mListView).isLoadingMore();
+    }
+
+    protected final void setOnLoadMoreListener(LoadMore.OnLoadMoreListener listener) {
+        if (isLoadMoreEnable()) {
+            ((JListView) mListView).setOnLoadMoreListener(listener);
+        }
     }
 
     protected final void stopLoadMore() {
@@ -410,29 +425,28 @@ public abstract class BaseHttpLvActivity<T> extends BaseHttpUiActivity<T> {
         }
     }
 
-    protected final boolean isLoadMoreFailed() {
-        return isLoadMoreEnable() && ((JListView) mListView).isLoadMoreFailed();
-    }
-
     protected final void hideLoadMore() {
         if (isLoadMoreEnable()) {
             ((JListView) mListView).hideLoadMore();
         }
     }
 
-    protected final void setLoadMoreDarkTheme() {
+    protected final void setLoadMoreTheme(LoadMore.Theme theme) {
         if (isLoadMoreEnable()) {
-            ((JListView) mListView).setLoadMoreDarkTheme();
+            switch (theme) {
+                case LIGHT:
+                    ((JListView) mListView).setLoadMoreLightTheme();
+                    break;
+                case DARK:
+                    ((JListView) mListView).setLoadMoreDarkTheme();
+                    break;
+                default:
+                    break;
+            }
         }
     }
 
-    protected final void setLoadMoreLightTheme() {
-        if (isLoadMoreEnable()) {
-            ((JListView) mListView).setLoadMoreLightTheme();
-        }
-    }
-
-    protected final void setLoadMoreHintTextColor(@ColorRes int resId) {
+    protected final void setLoadMoreHintColor(@ColorRes int resId) {
         if (isLoadMoreEnable()) {
             ((JListView) mListView).setLoadMoreHintTextColor(resId);
         }
