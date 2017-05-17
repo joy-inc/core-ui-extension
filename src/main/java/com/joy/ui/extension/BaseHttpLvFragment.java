@@ -83,7 +83,7 @@ public abstract class BaseHttpLvFragment<T> extends BaseHttpUiFragment<T> {
                 mSortIndex = mPageIndex;
                 setPageIndex(PAGE_START_INDEX);
                 setRefreshMode(RefreshMode.SWIPE);
-                launchRefreshOnly();
+                launch(getRequest(), RequestMode.REFRESH_ONLY);
             } else {
                 hideSwipeRefresh();
                 showToast(R.string.toast_common_no_network);
@@ -102,7 +102,7 @@ public abstract class BaseHttpLvFragment<T> extends BaseHttpUiFragment<T> {
                     }
                 }
                 setRefreshMode(RefreshMode.LOADMORE);
-                launchRefreshOnly();
+                launch(getRequest(), RequestMode.REFRESH_ONLY);
             } else {
                 setLoadMoreFailed();
                 if (!isAuto) {
