@@ -56,9 +56,13 @@ public abstract class BaseHttpLvActivity<T> extends BaseHttpUiActivity<T> {
      */
     protected ListView provideListView() {
         JListView jlv = inflateLayout(R.layout.lib_view_listview);
-        jlv.setLoadMoreView(JLoadingView.getLoadMore(this));
+        jlv.setLoadMoreView(provideLoadMoreView());
         jlv.setOnLoadMoreListener(getOnLoadMoreListener());
         return jlv;
+    }
+
+    protected View provideLoadMoreView() {
+        return JLoadingView.getLoadMore(this);
     }
 
     private View wrapSwipeRefresh(View contentView) {

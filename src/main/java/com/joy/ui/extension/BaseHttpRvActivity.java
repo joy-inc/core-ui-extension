@@ -59,9 +59,13 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
      */
     protected RecyclerView provideRecyclerView() {
         JRecyclerView jrv = inflateLayout(R.layout.lib_view_recycler);
-        jrv.setLoadMoreView(JLoadingView.getLoadMore(this));
+        jrv.setLoadMoreView(provideLoadMoreView());
         jrv.setOnLoadMoreListener(getOnLoadMoreListener());
         return jrv;
+    }
+
+    protected View provideLoadMoreView() {
+        return JLoadingView.getLoadMore(this);
     }
 
     /**
