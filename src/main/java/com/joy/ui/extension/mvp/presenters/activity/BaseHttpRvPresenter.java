@@ -4,8 +4,8 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v4.widget.SwipeRefreshLayout.OnRefreshListener;
 
 import com.joy.http.JoyHttp;
-import com.joy.http.RequestMode;
-import com.joy.http.volley.ObjectRequest;
+import com.joy.http.LaunchMode;
+import com.joy.http.volley.Request;
 import com.joy.ui.R;
 import com.joy.ui.RefreshMode;
 import com.joy.ui.activity.interfaces.BaseViewNetRv;
@@ -22,7 +22,7 @@ import rx.Observable;
 public class BaseHttpRvPresenter<T, V extends BaseViewNetRv> extends BaseHttpUiPresenter<T, V> {
 
     private static final int PAGE_UPPER_LIMIT = 20;// 默认分页大小
-    private static final int PAGE_START_INDEX = 1;// 默认起始页码
+    protected static int PAGE_START_INDEX = 1;// 默认起始页码
     private int mPageLimit = PAGE_UPPER_LIMIT;
     private int mPageIndex = PAGE_START_INDEX;
     private int mSortIndex = mPageIndex;
@@ -40,7 +40,7 @@ public class BaseHttpRvPresenter<T, V extends BaseViewNetRv> extends BaseHttpUiP
                 mSortIndex = mPageIndex;
                 setPageIndex(PAGE_START_INDEX);
                 getBaseView().setRefreshMode(RefreshMode.SWIPE);
-                launch(getRequest(getParams()), RequestMode.REFRESH_ONLY);// refresh only, don't cache
+                launch(getRequest(getParams()), LaunchMode.REFRESH_ONLY);// refresh only, don't cache
             } else {
                 getBaseView().hideSwipeRefresh();
                 getBaseView().showToast(R.string.toast_common_no_network);
@@ -59,7 +59,7 @@ public class BaseHttpRvPresenter<T, V extends BaseViewNetRv> extends BaseHttpUiP
                     }
                 }
                 getBaseView().setRefreshMode(RefreshMode.LOADMORE);
-                launch(getRequest(getParams()), RequestMode.REFRESH_ONLY);// refresh only, don't cache
+                launch(getRequest(getParams()), LaunchMode.REFRESH_ONLY);// refresh only, don't cache
             } else {
                 getBaseView().setLoadMoreFailed();
                 if (!isAuto) {
@@ -70,7 +70,7 @@ public class BaseHttpRvPresenter<T, V extends BaseViewNetRv> extends BaseHttpUiP
     }
 
     //    @Override
-    public Observable<T> launch(ObjectRequest<T> request, RequestMode mode) {
+    public Observable<T> launch(Request<T> request, LaunchMode mode) {
 //        Observable<T> observable = super.launch(request, mode);
         Observable<T> observable = JoyHttp.getLauncher().launch(request, mode);
         observable
@@ -150,10 +150,10 @@ public class BaseHttpRvPresenter<T, V extends BaseViewNetRv> extends BaseHttpUiP
     }
 
     @Override
-    public final Observable<T> launchCacheOnly(String... params) {
+    public final Observable<T> launchCacheOrRefresh(String... params) {
         setPageIndex(PAGE_START_INDEX);
         getBaseView().setRefreshMode(RefreshMode.FRAME);
-        return super.launchCacheOnly(params);
+        return super.launchCacheOrRefresh(params);
     }
 
     @Override
@@ -167,9 +167,9 @@ public class BaseHttpRvPresenter<T, V extends BaseViewNetRv> extends BaseHttpUiP
     public final Observable<T> launchCacheAndRefresh(String... params) {
         setParams(params);
         setPageIndex(PAGE_START_INDEX);
-        ObjectRequest<T> req = getRequest(params);
+        Request<T> req = getRequest(params);
         getBaseView().setRefreshMode(req.hasCache() ? RefreshMode.SWIPE : RefreshMode.FRAME);
-        return launch(req, RequestMode.CACHE_AND_REFRESH);
+        return launch(req, LaunchMode.CACHE_AND_REFRESH);
     }
 
     /**
@@ -179,7 +179,7 @@ public class BaseHttpRvPresenter<T, V extends BaseViewNetRv> extends BaseHttpUiP
         setParams(params);
         setPageIndex(PAGE_START_INDEX);
         getBaseView().setRefreshMode(RefreshMode.SWIPE);
-        launch(getRequest(params), getRequestMode());
+        launch(getRequest(params), getLaunchMode());
     }
 
     /**
@@ -189,7 +189,7 @@ public class BaseHttpRvPresenter<T, V extends BaseViewNetRv> extends BaseHttpUiP
         setParams(params);
         setPageIndex(PAGE_START_INDEX);
         getBaseView().setRefreshMode(RefreshMode.FRAME);
-        launch(getRequest(params), getRequestMode());
+        launch(getRequest(params), getLaunchMode());
     }
 
     /**

@@ -7,15 +7,16 @@ import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
+import android.view.ViewGroup;
 
 import com.facebook.drawee.backends.pipeline.Fresco;
 import com.facebook.drawee.interfaces.DraweeController;
 import com.facebook.drawee.view.SimpleDraweeView;
 import com.facebook.imagepipeline.common.ResizeOptions;
 import com.facebook.imagepipeline.core.ImagePipelineConfig;
-import com.facebook.imagepipeline.decoder.SimpleProgressiveJpegConfig;
 import com.facebook.imagepipeline.request.ImageRequest;
 import com.facebook.imagepipeline.request.ImageRequestBuilder;
+import com.joy.utils.LogMgr;
 
 /**
  * Created by KEVIN.DAI on 16/1/4.
@@ -49,11 +50,29 @@ public class FrescoImage extends SimpleDraweeView {
     /**
      * Displays an image given by the uri.
      *
-     * @param url url of the image
+     * @param uri url of the image
      * @undeprecate
      */
-    public void setImageURI(@Nullable String url) {
-        setImageURI(Uri.parse(url == null ? "" : url));
+    public void setImageURI(@Nullable String uri) {
+        int w = getWidth();
+        int h = getHeight();
+        if (w > 0 && h > 0) {
+            LogMgr.d("~~~~FrescoImage", "w: " + w + " h: " + h);
+            resize(uri, w, h);
+            return;
+        }
+        ViewGroup.LayoutParams lp = getLayoutParams();
+        if (lp != null) {
+            int width = lp.width;
+            int height = lp.height;
+            if (width > 0 && height > 0) {
+                LogMgr.i("~~~~FrescoImage", "width: " + width + " height: " + height);
+                resize(uri, width, height);
+                return;
+            }
+        }
+        LogMgr.e("~~~~FrescoImage", "=========================");
+        setImageURI(Uri.parse(uri == null ? "" : uri));
     }
 
     /**

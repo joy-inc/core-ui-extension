@@ -12,7 +12,7 @@ import android.widget.HeaderViewListAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 
-import com.joy.http.RequestMode;
+import com.joy.http.LaunchMode;
 import com.joy.http.volley.ObjectRequest;
 import com.joy.ui.RefreshMode;
 import com.joy.ui.adapter.ExLvAdapter;
@@ -37,7 +37,7 @@ import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 public abstract class BaseHttpLvFragment<T> extends BaseHttpUiFragment<T> {
 
     private static final int PAGE_UPPER_LIMIT = 20;// 默认分页大小
-    private static final int PAGE_START_INDEX = 1;// 默认起始页码
+    protected static int PAGE_START_INDEX = 1;// 默认起始页码
     private SwipeRefreshLayout mSwipeRl;
     private ListView mListView;
     private int mPageLimit = PAGE_UPPER_LIMIT;
@@ -73,7 +73,7 @@ public abstract class BaseHttpLvFragment<T> extends BaseHttpUiFragment<T> {
         return mSwipeRl;
     }
 
-    private void setRefreshMode(RefreshMode mode) {
+    protected final void setRefreshMode(RefreshMode mode) {
         mRefreshMode = mode;
     }
 
@@ -83,7 +83,7 @@ public abstract class BaseHttpLvFragment<T> extends BaseHttpUiFragment<T> {
                 mSortIndex = mPageIndex;
                 setPageIndex(PAGE_START_INDEX);
                 setRefreshMode(RefreshMode.SWIPE);
-                launch(getRequest(), RequestMode.REFRESH_ONLY);
+                launch(getRequest(), LaunchMode.REFRESH_ONLY);
             } else {
                 hideSwipeRefresh();
                 showToast(R.string.toast_common_no_network);
@@ -102,7 +102,7 @@ public abstract class BaseHttpLvFragment<T> extends BaseHttpUiFragment<T> {
                     }
                 }
                 setRefreshMode(RefreshMode.LOADMORE);
-                launch(getRequest(), RequestMode.REFRESH_ONLY);
+                launch(getRequest(), LaunchMode.REFRESH_ONLY);
             } else {
                 setLoadMoreFailed();
                 if (!isAuto) {
@@ -127,10 +127,10 @@ public abstract class BaseHttpLvFragment<T> extends BaseHttpUiFragment<T> {
     }
 
     @Override
-    protected final Observable<T> launchCacheOnly() {
+    protected final Observable<T> launchCacheOrRefresh() {
         setPageIndex(PAGE_START_INDEX);
         setRefreshMode(RefreshMode.FRAME);
-        return super.launchCacheOnly();
+        return super.launchCacheOrRefresh();
     }
 
     @Override
@@ -145,7 +145,7 @@ public abstract class BaseHttpLvFragment<T> extends BaseHttpUiFragment<T> {
         setPageIndex(PAGE_START_INDEX);
         ObjectRequest<T> req = getRequest();
         setRefreshMode(req.hasCache() ? RefreshMode.SWIPE : RefreshMode.FRAME);
-        return launch(req, RequestMode.CACHE_AND_REFRESH);
+        return launch(req, LaunchMode.CACHE_AND_REFRESH);
     }
 
     /**
@@ -254,7 +254,6 @@ public abstract class BaseHttpLvFragment<T> extends BaseHttpUiFragment<T> {
                 return true;
             }
         }
-
         setLoadMoreEnable(currentItemCount >= mPageLimit);
 
         if (mPageIndex == PAGE_START_INDEX) {

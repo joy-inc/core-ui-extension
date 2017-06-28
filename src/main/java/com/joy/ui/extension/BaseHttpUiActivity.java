@@ -2,17 +2,17 @@ package com.joy.ui.extension;
 
 import com.joy.http.JoyError;
 import com.joy.http.JoyHttp;
-import com.joy.http.RequestMode;
+import com.joy.http.LaunchMode;
 import com.joy.http.ResponseListener;
 import com.joy.http.ResponseListenerImpl;
-import com.joy.http.volley.ObjectRequest;
+import com.joy.http.volley.Request;
 
 import rx.Observable;
 
-import static com.joy.http.RequestMode.CACHE_AND_REFRESH;
-import static com.joy.http.RequestMode.CACHE_ONLY;
-import static com.joy.http.RequestMode.REFRESH_AND_CACHE;
-import static com.joy.http.RequestMode.REFRESH_ONLY;
+import static com.joy.http.LaunchMode.CACHE_AND_REFRESH;
+import static com.joy.http.LaunchMode.CACHE_OR_REFRESH;
+import static com.joy.http.LaunchMode.REFRESH_AND_CACHE;
+import static com.joy.http.LaunchMode.REFRESH_ONLY;
 
 /**
  * Created by KEVIN.DAI on 15/7/10.
@@ -22,33 +22,33 @@ import static com.joy.http.RequestMode.REFRESH_ONLY;
  */
 public abstract class BaseHttpUiActivity<T> extends com.joy.ui.activity.BaseHttpUiActivity {
 
-    private ObjectRequest<T> mRequest;
+    private Request<T> mRequest;
     private boolean isContentDisplayed;
 
     @Override
     protected void onPause() {
         super.onPause();
         if (isFinishing()) {
-            cancelLauncher();
+            abortLauncher();
         }
     }
 
     @Override
     public void doOnRetry() {
-        launch(getRequest(), getRequestMode());
+        launch(getRequest(), getLaunchMode());
     }
 
-    protected final RequestMode getRequestMode() {
-        return mRequest != null ? mRequest.getRequestMode() : REFRESH_ONLY;
+    protected final LaunchMode getLaunchMode() {
+        return mRequest != null ? mRequest.getLaunchMode() : REFRESH_ONLY;
     }
 
     final boolean isFinalResponse() {
         return mRequest != null && mRequest.isFinalResponse();
     }
 
-    protected final void cancelLauncher() {
+    protected final void abortLauncher() {
         if (mRequest != null) {
-            mRequest.cancel();
+            JoyHttp.getLauncher().abort(mRequest);
             mRequest = null;
         }
     }
@@ -61,10 +61,10 @@ public abstract class BaseHttpUiActivity<T> extends com.joy.ui.activity.BaseHttp
     }
 
     /**
-     * fetch cache-->response.
+     * fetch cache or net-->response.
      */
-    protected Observable<T> launchCacheOnly() {
-        return launch(getRequest(), CACHE_ONLY);
+    protected Observable<T> launchCacheOrRefresh() {
+        return launch(getRequest(), CACHE_OR_REFRESH);
     }
 
     /**
@@ -84,14 +84,14 @@ public abstract class BaseHttpUiActivity<T> extends com.joy.ui.activity.BaseHttp
     /**
      * @see {@link #getRequest()}
      */
-    final Observable<T> launch(ObjectRequest<T> request, RequestMode mode) {
+    final Observable<T> launch(Request<T> request, LaunchMode mode) {
         if (request == null) {
             throw new NullPointerException("You need override the getRequest() method.");
         }
-        cancelLauncher();
+        abortLauncher();
         mRequest = request;
-        mRequest.setRequestMode(mode);
-        mRequest.setResponseListener(getResponseListener());
+        mRequest.setLaunchMode(mode);
+        mRequest.setListener(getResponseListener());
         return JoyHttp.getLauncher().launch(mRequest, mode);
     }
 
@@ -123,10 +123,12 @@ public abstract class BaseHttpUiActivity<T> extends com.joy.ui.activity.BaseHttp
             @Override
             public void onError(Object tag, Throwable error) {
                 if (!isFinishing()) {
-                    super.onError(tag, error);
                     hideLoading();
-                    hideContent();
-                    showErrorTip();
+                    if (error instanceof JoyError && !((JoyError) error).isCancelCaused()) {
+                        super.onError(tag, error);
+                        hideContent();
+                        showErrorTip();
+                    }
                 }
             }
 
@@ -146,13 +148,5 @@ public abstract class BaseHttpUiActivity<T> extends com.joy.ui.activity.BaseHttp
         showToast(error.getMessage());
     }
 
-    protected abstract ObjectRequest<T> getRequest();
-
-    protected final void cancelLauncher(Object tag) {
-        JoyHttp.getLauncher().cancelLauncher(tag);
-    }
-
-    protected final void cancelAllLaunchers() {
-        JoyHttp.getLauncher().cancelAllLauncher();
-    }
+    protected abstract Request<T> getRequest();
 }

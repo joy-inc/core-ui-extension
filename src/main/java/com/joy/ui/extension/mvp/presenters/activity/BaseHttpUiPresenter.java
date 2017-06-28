@@ -1,30 +1,30 @@
 package com.joy.ui.extension.mvp.presenters.activity;
 
 import com.joy.http.JoyHttp;
-import com.joy.http.RequestMode;
-import com.joy.http.volley.ObjectRequest;
+import com.joy.http.LaunchMode;
+import com.joy.http.volley.Request;
 import com.joy.ui.activity.interfaces.BaseViewNet;
 import com.joy.ui.extension.mvp.presenters.PresenterImpl;
 import com.joy.ui.extension.mvp.presenters.RequestLauncher;
 
 import rx.Observable;
 
-import static com.joy.http.RequestMode.REFRESH_ONLY;
+import static com.joy.http.LaunchMode.REFRESH_ONLY;
 
 /**
  * Created by KEVIN.DAI on 16/1/18.
  */
 public class BaseHttpUiPresenter<T, V extends BaseViewNet> extends PresenterImpl<V> implements RequestLauncher<T> {
 
-    private ObjectRequest<T> mRequest;
+    private Request<T> mRequest;
     private String[] mParams;
 
 //    @Override
-//    public Observable<T> launch(ObjectRequest<T> request, RequestMode mode) {
+//    public Observable<T> launch(Request<T> request, RequestMode mode) {
 //        if (request == null) {
 //            throw new NullPointerException("You need override the getRequest() method.");
 //        }
-//        cancel();
+//        abortLauncher();
 //        mRequest = request;
 //        mRequest.setRequestMode(mode);
 //        Observable<T> observable = addRequest(mRequest, mode != REFRESH_ONLY);
@@ -81,9 +81,9 @@ public class BaseHttpUiPresenter<T, V extends BaseViewNet> extends PresenterImpl
     }
 
 //    @Override
-//    public final void cancel() {
+//    public final void abortLauncher() {
 //        if (mRequest != null) {
-//            mRequest.cancel();
+//            JoyHttp.getLauncher().abort(mRequest);
 //            mRequest = null;
 //        }
 //    }
@@ -93,9 +93,9 @@ public class BaseHttpUiPresenter<T, V extends BaseViewNet> extends PresenterImpl
         return JoyHttp.getLauncher().launchRefreshOnly(getRequest(params));
     }
 
-    public Observable<T> launchCacheOnly(String... params) {
+    public Observable<T> launchCacheOrRefresh(String... params) {
         setParams(params);
-        return JoyHttp.getLauncher().launchCacheOnly(getRequest(params));
+        return JoyHttp.getLauncher().launchCacheOrRefresh(getRequest(params));
     }
 
     public Observable<T> launchRefreshAndCache(String... params) {
@@ -108,7 +108,7 @@ public class BaseHttpUiPresenter<T, V extends BaseViewNet> extends PresenterImpl
         return JoyHttp.getLauncher().launchCacheAndRefresh(getRequest(params));
     }
 
-    protected ObjectRequest<T> getRequest(String... params) {
+    protected Request<T> getRequest(String... params) {
         return null;
     }
 
@@ -120,8 +120,8 @@ public class BaseHttpUiPresenter<T, V extends BaseViewNet> extends PresenterImpl
         return mParams;
     }
 
-    public final RequestMode getRequestMode() {
-        return mRequest != null ? mRequest.getRequestMode() : REFRESH_ONLY;
+    public final LaunchMode getLaunchMode() {
+        return mRequest != null ? mRequest.getLaunchMode() : REFRESH_ONLY;
     }
 
 //    public final boolean isReqHasCache() {
@@ -132,37 +132,29 @@ public class BaseHttpUiPresenter<T, V extends BaseViewNet> extends PresenterImpl
         return mRequest != null && mRequest.isFinalResponse();
     }
 
-//    public final Observable<T> addRequestNoCache(ObjectRequest<T> req, Object tag) {
+//    public final Observable<T> addRequestNoCache(Request<T> req, Object tag) {
 //        return addRequest(req, tag, false);
 //    }
 
-//    public final Observable<T> addRequestHasCache(ObjectRequest<T> req, Object tag) {
+//    public final Observable<T> addRequestHasCache(Request<T> req, Object tag) {
 //        return addRequest(req, tag, true);
 //    }
 
-//    public final Observable<T> addRequest(ObjectRequest<T> req, Object tag, boolean shouldCache) {
+//    public final Observable<T> addRequest(Request<T> req, Object tag, boolean shouldCache) {
 //        req.setTag(tag);
 //        req.setShouldCache(shouldCache);
 //        return JoyHttp.getLauncher().addRequest(req);
 //    }
 
-//    public final Observable<T> addRequestNoCache(ObjectRequest<T> req) {
+//    public final Observable<T> addRequestNoCache(Request<T> req) {
 //        return addRequest(req, false);
 //    }
 
-//    public final Observable<T> addRequestHasCache(ObjectRequest<T> req) {
+//    public final Observable<T> addRequestHasCache(Request<T> req) {
 //        return addRequest(req, true);
 //    }
 
-//    public final Observable<T> addRequest(ObjectRequest<T> req, boolean shouldCache) {
+//    public final Observable<T> addRequest(Request<T> req, boolean shouldCache) {
 //        return addRequest(req, req.getIdentifier(), shouldCache);
 //    }
-
-    public final void cancelLauncher(Object tag) {
-        JoyHttp.getLauncher().cancelLauncher(tag);
-    }
-
-    public final void cancelAllLaunchers() {
-        JoyHttp.getLauncher().cancelAllLauncher();
-    }
 }
