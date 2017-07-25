@@ -23,7 +23,7 @@ import com.joy.utils.LayoutInflater;
 
 import java.util.List;
 
-import rx.Observable;
+import rx.Subscription;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
@@ -33,14 +33,14 @@ import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
 public abstract class ExBaseHttpRvWidget<T> extends ExBaseHttpWidget<T> {
 
-    private static final int PAGE_UPPER_LIMIT = 20;// 默认分页大小
-    protected static int PAGE_START_INDEX = 1;// 默认起始页码
-    private SwipeRefreshLayout mSwipeRl;
-    private RecyclerView mRecyclerView;
-    private int mPageLimit = PAGE_UPPER_LIMIT;
-    private int mPageIndex = PAGE_START_INDEX;
-    private int mSortIndex = mPageIndex;
-    private RefreshMode mRefreshMode;
+    protected static final int PAGE_UPPER_LIMIT = 20;// 默认分页大小
+    protected int PAGE_START_INDEX = 1;// 默认起始页码
+    protected SwipeRefreshLayout mSwipeRl;
+    protected RecyclerView mRecyclerView;
+    protected int mPageLimit = PAGE_UPPER_LIMIT;
+    protected int mPageIndex = PAGE_START_INDEX;
+    protected int mSortIndex = mPageIndex;
+    protected RefreshMode mRefreshMode;
 
     public ExBaseHttpRvWidget(Activity activity) {
         super(activity);
@@ -85,16 +85,20 @@ public abstract class ExBaseHttpRvWidget<T> extends ExBaseHttpWidget<T> {
         return mSwipeRl;
     }
 
-    protected final RecyclerView getRecyclerView() {
+    public RecyclerView getRecyclerView() {
         return mRecyclerView;
     }
 
-    protected final LayoutManager getLayoutManager() {
+    public LayoutManager getLayoutManager() {
         return mRecyclerView.getLayoutManager();
     }
 
-    protected final void setRefreshMode(RefreshMode mode) {
+    public void setRefreshMode(RefreshMode mode) {
         mRefreshMode = mode;
+    }
+
+    public RefreshMode getRefreshMode() {
+        return mRefreshMode;
     }
 
     private SwipeRefreshLayout.OnRefreshListener getOnRefreshListener() {
@@ -103,7 +107,7 @@ public abstract class ExBaseHttpRvWidget<T> extends ExBaseHttpWidget<T> {
                 mSortIndex = mPageIndex;
                 setPageIndex(PAGE_START_INDEX);
                 setRefreshMode(RefreshMode.SWIPE);
-                launch(getRequest(), LaunchMode.REFRESH_ONLY);
+                launch(getRequest(getParams()), LaunchMode.REFRESH_ONLY);
             } else {
                 hideSwipeRefresh();
                 showToast(R.string.toast_common_no_network);
@@ -122,7 +126,7 @@ public abstract class ExBaseHttpRvWidget<T> extends ExBaseHttpWidget<T> {
                     }
                 }
                 setRefreshMode(RefreshMode.LOADMORE);
-                launch(getRequest(), LaunchMode.REFRESH_ONLY);
+                launch(getRequest(getParams()), LaunchMode.REFRESH_ONLY);
             } else {
                 setLoadMoreFailed();
                 if (!isAuto) {
@@ -133,37 +137,37 @@ public abstract class ExBaseHttpRvWidget<T> extends ExBaseHttpWidget<T> {
     }
 
     @Override
-    protected final ObjectRequest<T> getRequest() {
-        return getRequest(mPageIndex, mPageLimit);
+    protected ObjectRequest<T> getRequest(String... params) {
+        return getRequest(mPageIndex, mPageLimit, params);
     }
 
-    protected abstract ObjectRequest<T> getRequest(int pageIndex, int pageLimit);
+    protected abstract ObjectRequest<T> getRequest(int pageIndex, int pageLimit, String... params);
 
     @Override
-    protected final Observable<T> launchRefreshOnly() {
+    public Subscription launchRefreshOnly(String... params) {
         setPageIndex(PAGE_START_INDEX);
         setRefreshMode(RefreshMode.FRAME);
-        return super.launchRefreshOnly();
+        return super.launchRefreshOnly(params);
     }
 
     @Override
-    protected final Observable<T> launchCacheOrRefresh() {
+    public Subscription launchCacheOrRefresh(String... params) {
         setPageIndex(PAGE_START_INDEX);
         setRefreshMode(RefreshMode.FRAME);
-        return super.launchCacheOrRefresh();
+        return super.launchCacheOrRefresh(params);
     }
 
     @Override
-    protected final Observable<T> launchRefreshAndCache() {
+    public Subscription launchRefreshAndCache(String... params) {
         setPageIndex(PAGE_START_INDEX);
         setRefreshMode(RefreshMode.FRAME);
-        return super.launchRefreshAndCache();
+        return super.launchRefreshAndCache(params);
     }
 
     @Override
-    protected final Observable<T> launchCacheAndRefresh() {
+    public Subscription launchCacheAndRefresh(String... params) {
         setPageIndex(PAGE_START_INDEX);
-        ObjectRequest<T> req = getRequest();
+        ObjectRequest<T> req = getRequest(params);
         setRefreshMode(req.hasCache() ? RefreshMode.SWIPE : RefreshMode.FRAME);
         return launch(req, LaunchMode.CACHE_AND_REFRESH);
     }
@@ -171,7 +175,7 @@ public abstract class ExBaseHttpRvWidget<T> extends ExBaseHttpWidget<T> {
     /**
      * show swipe refresh view {@link SwipeRefreshLayout}
      */
-    protected final void launchSwipeRefresh() {
+    public void launchSwipeRefresh() {
         setPageIndex(PAGE_START_INDEX);
         setRefreshMode(RefreshMode.SWIPE);
         doOnRetry();
@@ -180,7 +184,7 @@ public abstract class ExBaseHttpRvWidget<T> extends ExBaseHttpWidget<T> {
     /**
      * show frame refresh view {@link JLoadingView}
      */
-    protected final void launchFrameRefresh() {
+    public void launchFrameRefresh() {
         setPageIndex(PAGE_START_INDEX);
         setRefreshMode(RefreshMode.FRAME);
         doOnRetry();
@@ -191,11 +195,11 @@ public abstract class ExBaseHttpRvWidget<T> extends ExBaseHttpWidget<T> {
      *
      * @param pageLimit 分页大小
      */
-    protected final void setPageLimit(int pageLimit) {
+    public void setPageLimit(int pageLimit) {
         mPageLimit = pageLimit;
     }
 
-    protected final int getPageLimit() {
+    public int getPageLimit() {
         return mPageLimit;
     }
 
@@ -204,23 +208,23 @@ public abstract class ExBaseHttpRvWidget<T> extends ExBaseHttpWidget<T> {
      *
      * @param index 页码
      */
-    protected final void setPageIndex(int index) {
+    public void setPageIndex(int index) {
         mPageIndex = index;
     }
 
-    protected final int getPageIndex() {
+    public int getPageIndex() {
         return mPageIndex;
     }
 
-    protected final int getHeaderViewsCount() {
+    public int getHeaderViewsCount() {
         return ((RecyclerAdapter) mRecyclerView.getAdapter()).getHeadersCount();
     }
 
-    protected final int getFooterViewsCount() {
+    public int getFooterViewsCount() {
         return ((RecyclerAdapter) mRecyclerView.getAdapter()).getFootersCount();
     }
 
-    protected final void addHeaderView(View v) {
+    public void addHeaderView(View v) {
         Adapter adapter = mRecyclerView.getAdapter();
         if (adapter == null)
             throw new IllegalStateException(
@@ -228,7 +232,7 @@ public abstract class ExBaseHttpRvWidget<T> extends ExBaseHttpWidget<T> {
         ((RecyclerAdapter) adapter).addHeaderView(v);
     }
 
-    protected final void addFooterView(View v) {
+    public void addFooterView(View v) {
         Adapter adapter = mRecyclerView.getAdapter();
         if (adapter == null)
             throw new IllegalStateException(
@@ -236,19 +240,34 @@ public abstract class ExBaseHttpRvWidget<T> extends ExBaseHttpWidget<T> {
         ((RecyclerAdapter) adapter).addFooterView(v);
     }
 
-    protected final void removeHeaderView(View v) {
+    public void removeHeaderView(View v) {
         ((RecyclerAdapter) mRecyclerView.getAdapter()).removeHeader(v);
     }
 
-    protected final void removeFooterView(View v) {
+    public void removeAllHeaders() {
+        ((RecyclerAdapter) mRecyclerView.getAdapter()).removeAllHeaders();
+    }
+
+    public void removeFooterView(View v) {
         ((RecyclerAdapter) mRecyclerView.getAdapter()).removeFooter(v);
     }
 
-    protected final void setAdapter(ExRvAdapter adapter) {
+    public void removeAllFooters() {
+        ((RecyclerAdapter) mRecyclerView.getAdapter()).removeAllFooters();
+    }
+
+    public void clearAdapter() {
+        ExRvAdapter adapter = getAdapter();
+        int itemCount = adapter.getItemCount();
+        adapter.clear();
+        adapter.notifyItemRangeRemoved(0, itemCount);
+    }
+
+    public void setAdapter(ExRvAdapter adapter) {
         mRecyclerView.setAdapter(new RecyclerAdapter(adapter, getLayoutManager()));
     }
 
-    protected final ExRvAdapter getAdapter() {
+    public ExRvAdapter getAdapter() {
         Adapter adapter = mRecyclerView.getAdapter();
         if (adapter instanceof RecyclerAdapter) {
             return (ExRvAdapter) ((RecyclerAdapter) adapter).getWrappedAdapter();
@@ -263,9 +282,9 @@ public abstract class ExBaseHttpRvWidget<T> extends ExBaseHttpWidget<T> {
         if (adapter == null) {
             return false;
         }
-        final int adapterItemCount = adapter.getItemCount();
+        int adapterItemCount = adapter.getItemCount();
         List<?> ts = getListInvalidateContent(t);
-        final int currentItemCount = CollectionUtil.size(ts);
+        int currentItemCount = CollectionUtil.size(ts);
         if (currentItemCount == 0) {
             if (mPageIndex == PAGE_START_INDEX) {
                 if (adapterItemCount > 0) {
@@ -284,6 +303,7 @@ public abstract class ExBaseHttpRvWidget<T> extends ExBaseHttpWidget<T> {
             adapter.setData(ts);
             if (adapterItemCount == 0) {
                 adapter.notifyItemRangeInserted(0, currentItemCount);
+                getLayoutManager().scrollToPosition(0);
                 addLoadMoreIfNecessary();
             } else {
                 adapter.notifyItemRangeRemoved(0, adapterItemCount);
@@ -305,7 +325,7 @@ public abstract class ExBaseHttpRvWidget<T> extends ExBaseHttpWidget<T> {
     }
 
     @Override
-    public final void showLoading() {
+    public void showLoading() {
         switch (mRefreshMode) {
             case SWIPE:
                 showSwipeRefresh();
@@ -326,7 +346,7 @@ public abstract class ExBaseHttpRvWidget<T> extends ExBaseHttpWidget<T> {
     }
 
     @Override
-    public final void hideLoading() {
+    public void hideLoading() {
         switch (mRefreshMode) {
             case SWIPE:
                 hideSwipeRefresh();
@@ -343,7 +363,7 @@ public abstract class ExBaseHttpRvWidget<T> extends ExBaseHttpWidget<T> {
     }
 
     @Override
-    public final void showErrorTip() {
+    public void showErrorTip() {
         switch (mRefreshMode) {
             case SWIPE:
                 showToast(R.string.toast_common_timeout);
@@ -362,7 +382,7 @@ public abstract class ExBaseHttpRvWidget<T> extends ExBaseHttpWidget<T> {
     }
 
     @Override
-    public final void showEmptyTip() {
+    public void showEmptyTip() {
         if ((mRefreshMode == RefreshMode.SWIPE || mRefreshMode == RefreshMode.FRAME) && getAdapter().getItemCount() == 0) {
             super.showEmptyTip();
         }
@@ -375,55 +395,55 @@ public abstract class ExBaseHttpRvWidget<T> extends ExBaseHttpWidget<T> {
         }
     }
 
-    protected final void setSwipeRefreshEnable(boolean enable) {
+    public void setSwipeRefreshEnable(boolean enable) {
         mSwipeRl.setEnabled(enable);
     }
 
-    protected final boolean isSwipeRefreshing() {
+    public boolean isSwipeRefreshing() {
         return mSwipeRl.isRefreshing();
     }
 
-    protected final void showSwipeRefresh() {
+    public void showSwipeRefresh() {
         if (!isSwipeRefreshing()) {
             mSwipeRl.setRefreshing(true);
         }
     }
 
-    protected final void hideSwipeRefresh() {
+    public void hideSwipeRefresh() {
         if (isSwipeRefreshing()) {
             mSwipeRl.setRefreshing(false);
         }
     }
 
-    protected final void setLoadMoreEnable(boolean enable) {
+    public void setLoadMoreEnable(boolean enable) {
         if (mRecyclerView instanceof JRecyclerView) {
             ((JRecyclerView) mRecyclerView).setLoadMoreEnable(enable);
         }
     }
 
-    protected final boolean isLoadMoreEnable() {
+    public boolean isLoadMoreEnable() {
         return mRecyclerView instanceof JRecyclerView && ((JRecyclerView) mRecyclerView).isLoadMoreEnable();
     }
 
-    protected final void addLoadMoreIfNecessary() {
+    public void addLoadMoreIfNecessary() {
         if (isLoadMoreEnable()) {
             ((JRecyclerView) mRecyclerView).addLoadMoreIfNotExist();
         }
     }
 
-    protected final void stopLoadMore() {
+    public void stopLoadMore() {
         if (isLoadMoreEnable()) {
             ((JRecyclerView) mRecyclerView).stopLoadMore();
         }
     }
 
-    protected final void setLoadMoreFailed() {
+    public void setLoadMoreFailed() {
         if (isLoadMoreEnable()) {
             ((JRecyclerView) mRecyclerView).setLoadMoreFailed();
         }
     }
 
-    protected final void hideLoadMore() {
+    public void hideLoadMore() {
         if (isLoadMoreEnable()) {
             ((JRecyclerView) mRecyclerView).hideLoadMore();
         }

@@ -43,8 +43,42 @@ public class FrescoImage extends SimpleDraweeView {
         Fresco.initialize(appContext, config);
     }
 
-    public static void shutdown() {
+    public static void shutDown() {
         Fresco.shutDown();
+    }
+
+    public static void clearMemoryCaches() {
+        Fresco.getImagePipeline().clearMemoryCaches();
+    }
+
+    public static void clearDiskCaches() {
+        Fresco.getImagePipeline().clearDiskCaches();
+    }
+
+    public static void clearCaches() {
+        Fresco.getImagePipeline().clearCaches();
+    }
+
+    public void setImageGifURI(@DrawableRes int drawableResId, int width, int height) {
+        setImageGifURI("res://" + getContext().getPackageName() + "/" + drawableResId, width, height);
+    }
+
+    /**
+     * Displays an image(include * and gif) given by the uriString.
+     *
+     * @param uri of the image
+     * @undeprecate
+     */
+    public void setImageGifURI(String uri, int width, int height) {
+        ImageRequest request = ImageRequestBuilder.newBuilderWithSource(Uri.parse(uri))
+                .setResizeOptions(new ResizeOptions(width, height))
+                .build();
+        DraweeController controller = Fresco.newDraweeControllerBuilder()
+                .setOldController(getController())
+                .setImageRequest(request)
+                .setAutoPlayAnimations(true)
+                .build();
+        setController(controller);
     }
 
     /**
@@ -57,7 +91,6 @@ public class FrescoImage extends SimpleDraweeView {
         int w = getWidth();
         int h = getHeight();
         if (w > 0 && h > 0) {
-            LogMgr.d("~~~~FrescoImage", "w: " + w + " h: " + h);
             resize(uri, w, h);
             return;
         }
@@ -66,12 +99,11 @@ public class FrescoImage extends SimpleDraweeView {
             int width = lp.width;
             int height = lp.height;
             if (width > 0 && height > 0) {
-                LogMgr.i("~~~~FrescoImage", "width: " + width + " height: " + height);
                 resize(uri, width, height);
                 return;
             }
         }
-        LogMgr.e("~~~~FrescoImage", "=========================");
+        LogMgr.e("FrescoImage", "============= Notice: not resize ============");
         setImageURI(Uri.parse(uri == null ? "" : uri));
     }
 
@@ -89,7 +121,12 @@ public class FrescoImage extends SimpleDraweeView {
         resize(Uri.parse(url == null ? "" : url), width, height);
     }
 
+    public void resize(@DrawableRes int drawableResId, int width, int height) {
+        resize("res://" + getContext().getPackageName() + "/" + drawableResId, width, height);
+    }
+
     public void resize(@NonNull Uri uri, int width, int height) {
+//        LogMgr.d("FrescoImage", "resize w: " + width + " h: " + height);
         ImageRequest request = ImageRequestBuilder.newBuilderWithSource(uri)
                 .setResizeOptions(new ResizeOptions(width, height))
                 .build();

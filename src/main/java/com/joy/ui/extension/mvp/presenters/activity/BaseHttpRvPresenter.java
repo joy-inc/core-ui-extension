@@ -21,11 +21,11 @@ import rx.Observable;
  */
 public class BaseHttpRvPresenter<T, V extends BaseViewNetRv> extends BaseHttpUiPresenter<T, V> {
 
-    private static final int PAGE_UPPER_LIMIT = 20;// 默认分页大小
-    protected static int PAGE_START_INDEX = 1;// 默认起始页码
-    private int mPageLimit = PAGE_UPPER_LIMIT;
-    private int mPageIndex = PAGE_START_INDEX;
-    private int mSortIndex = mPageIndex;
+    protected static final int PAGE_UPPER_LIMIT = 20;// 默认分页大小
+    protected int PAGE_START_INDEX = 1;// 默认起始页码
+    protected int mPageLimit = PAGE_UPPER_LIMIT;
+    protected int mPageIndex = PAGE_START_INDEX;
+    protected int mSortIndex = mPageIndex;
 
     @Override
     public void attachView(V v) {
@@ -103,7 +103,7 @@ public class BaseHttpRvPresenter<T, V extends BaseViewNetRv> extends BaseHttpUiP
             return;
         }
         if (mPageIndex == PAGE_START_INDEX) {
-            final int adapterItemCount = adapter.getItemCount();
+            int adapterItemCount = adapter.getItemCount();
             if (adapterItemCount > 0) {
                 adapter.clear();
                 adapter.notifyItemRangeRemoved(0, adapterItemCount);
@@ -115,16 +115,17 @@ public class BaseHttpRvPresenter<T, V extends BaseViewNetRv> extends BaseHttpUiP
     }
 
     public void onNext(List<?> ts) {
-        final int currentItemCount = ts.size();
+        int currentItemCount = ts.size();
         getBaseView().setLoadMoreEnable(currentItemCount >= mPageLimit);
 
         ExRvAdapter adapter = getBaseView().getAdapter();
         if (adapter != null) {
-            final int adapterItemCount = adapter.getItemCount();
+            int adapterItemCount = adapter.getItemCount();
             if (mPageIndex == PAGE_START_INDEX) {
                 adapter.setData(ts);
                 if (adapterItemCount == 0) {
                     adapter.notifyItemRangeInserted(0, currentItemCount);
+                    getBaseView().getLayoutManager().scrollToPosition(0);
                     getBaseView().addLoadMoreIfNecessary();
                 } else {
                     adapter.notifyItemRangeRemoved(0, adapterItemCount);
@@ -143,28 +144,28 @@ public class BaseHttpRvPresenter<T, V extends BaseViewNetRv> extends BaseHttpUiP
     }
 
     @Override
-    public final Observable<T> launchRefreshOnly(String... params) {
+    public Observable<T> launchRefreshOnly(String... params) {
         setPageIndex(PAGE_START_INDEX);
         getBaseView().setRefreshMode(RefreshMode.FRAME);
         return super.launchRefreshOnly(params);
     }
 
     @Override
-    public final Observable<T> launchCacheOrRefresh(String... params) {
+    public Observable<T> launchCacheOrRefresh(String... params) {
         setPageIndex(PAGE_START_INDEX);
         getBaseView().setRefreshMode(RefreshMode.FRAME);
         return super.launchCacheOrRefresh(params);
     }
 
     @Override
-    public final Observable<T> launchRefreshAndCache(String... params) {
+    public Observable<T> launchRefreshAndCache(String... params) {
         setPageIndex(PAGE_START_INDEX);
         getBaseView().setRefreshMode(RefreshMode.FRAME);
         return super.launchRefreshAndCache(params);
     }
 
     @Override
-    public final Observable<T> launchCacheAndRefresh(String... params) {
+    public Observable<T> launchCacheAndRefresh(String... params) {
         setParams(params);
         setPageIndex(PAGE_START_INDEX);
         Request<T> req = getRequest(params);
@@ -175,7 +176,7 @@ public class BaseHttpRvPresenter<T, V extends BaseViewNetRv> extends BaseHttpUiP
     /**
      * show swipe refresh view {@link SwipeRefreshLayout}
      */
-    public final void launchSwipeRefresh(String... params) {
+    public void launchSwipeRefresh(String... params) {
         setParams(params);
         setPageIndex(PAGE_START_INDEX);
         getBaseView().setRefreshMode(RefreshMode.SWIPE);
@@ -185,7 +186,7 @@ public class BaseHttpRvPresenter<T, V extends BaseViewNetRv> extends BaseHttpUiP
     /**
      * show frame refresh view {@link com.joy.ui.view.JLoadingView}
      */
-    public final void launchFrameRefresh(String... params) {
+    public void launchFrameRefresh(String... params) {
         setParams(params);
         setPageIndex(PAGE_START_INDEX);
         getBaseView().setRefreshMode(RefreshMode.FRAME);
@@ -197,11 +198,11 @@ public class BaseHttpRvPresenter<T, V extends BaseViewNetRv> extends BaseHttpUiP
      *
      * @param limit
      */
-    public final void setPageLimit(int limit) {
+    public void setPageLimit(int limit) {
         mPageLimit = limit;
     }
 
-    public final int getPageLimit() {
+    public int getPageLimit() {
         return mPageLimit;
     }
 
@@ -210,11 +211,11 @@ public class BaseHttpRvPresenter<T, V extends BaseViewNetRv> extends BaseHttpUiP
      *
      * @param index
      */
-    public final void setPageIndex(int index) {
+    public void setPageIndex(int index) {
         mPageIndex = index;
     }
 
-    public final int getPageIndex() {
+    public int getPageIndex() {
         return mPageIndex;
     }
 }

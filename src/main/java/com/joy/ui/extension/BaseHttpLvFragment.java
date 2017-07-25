@@ -23,7 +23,7 @@ import com.joy.utils.CollectionUtil;
 
 import java.util.List;
 
-import rx.Observable;
+import rx.Subscription;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
@@ -36,14 +36,14 @@ import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
 public abstract class BaseHttpLvFragment<T> extends BaseHttpUiFragment<T> {
 
-    private static final int PAGE_UPPER_LIMIT = 20;// 默认分页大小
-    protected static int PAGE_START_INDEX = 1;// 默认起始页码
-    private SwipeRefreshLayout mSwipeRl;
-    private ListView mListView;
-    private int mPageLimit = PAGE_UPPER_LIMIT;
-    private int mPageIndex = PAGE_START_INDEX;
-    private int mSortIndex = mPageIndex;
-    private RefreshMode mRefreshMode;
+    protected static final int PAGE_UPPER_LIMIT = 20;// 默认分页大小
+    protected int PAGE_START_INDEX = 1;// 默认起始页码
+    protected SwipeRefreshLayout mSwipeRl;
+    protected ListView mListView;
+    protected int mPageLimit = PAGE_UPPER_LIMIT;
+    protected int mPageIndex = PAGE_START_INDEX;
+    protected int mSortIndex = mPageIndex;
+    protected RefreshMode mRefreshMode;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -73,8 +73,12 @@ public abstract class BaseHttpLvFragment<T> extends BaseHttpUiFragment<T> {
         return mSwipeRl;
     }
 
-    protected final void setRefreshMode(RefreshMode mode) {
+    public void setRefreshMode(RefreshMode mode) {
         mRefreshMode = mode;
+    }
+
+    public RefreshMode getRefreshMode() {
+        return mRefreshMode;
     }
 
     private OnRefreshListener getOnRefreshListener() {
@@ -113,35 +117,35 @@ public abstract class BaseHttpLvFragment<T> extends BaseHttpUiFragment<T> {
     }
 
     @Override
-    protected final ObjectRequest<T> getRequest() {
+    protected ObjectRequest<T> getRequest() {
         return getRequest(mPageIndex, mPageLimit);
     }
 
     protected abstract ObjectRequest<T> getRequest(int pageIndex, int pageLimit);
 
     @Override
-    protected final Observable<T> launchRefreshOnly() {
+    public Subscription launchRefreshOnly() {
         setPageIndex(PAGE_START_INDEX);
         setRefreshMode(RefreshMode.FRAME);
         return super.launchRefreshOnly();
     }
 
     @Override
-    protected final Observable<T> launchCacheOrRefresh() {
+    public Subscription launchCacheOrRefresh() {
         setPageIndex(PAGE_START_INDEX);
         setRefreshMode(RefreshMode.FRAME);
         return super.launchCacheOrRefresh();
     }
 
     @Override
-    protected final Observable<T> launchRefreshAndCache() {
+    public Subscription launchRefreshAndCache() {
         setPageIndex(PAGE_START_INDEX);
         setRefreshMode(RefreshMode.FRAME);
         return super.launchRefreshAndCache();
     }
 
     @Override
-    protected final Observable<T> launchCacheAndRefresh() {
+    public Subscription launchCacheAndRefresh() {
         setPageIndex(PAGE_START_INDEX);
         ObjectRequest<T> req = getRequest();
         setRefreshMode(req.hasCache() ? RefreshMode.SWIPE : RefreshMode.FRAME);
@@ -151,7 +155,7 @@ public abstract class BaseHttpLvFragment<T> extends BaseHttpUiFragment<T> {
     /**
      * show swipe refresh view {@link SwipeRefreshLayout}
      */
-    protected final void launchSwipeRefresh() {
+    public void launchSwipeRefresh() {
         setPageIndex(PAGE_START_INDEX);
         setRefreshMode(RefreshMode.SWIPE);
         doOnRetry();
@@ -160,7 +164,7 @@ public abstract class BaseHttpLvFragment<T> extends BaseHttpUiFragment<T> {
     /**
      * show frame refresh view {@link JLoadingView}
      */
-    protected final void launchFrameRefresh() {
+    public void launchFrameRefresh() {
         setPageIndex(PAGE_START_INDEX);
         setRefreshMode(RefreshMode.FRAME);
         doOnRetry();
@@ -171,11 +175,11 @@ public abstract class BaseHttpLvFragment<T> extends BaseHttpUiFragment<T> {
      *
      * @param pageLimit 分页大小
      */
-    protected final void setPageLimit(int pageLimit) {
+    public void setPageLimit(int pageLimit) {
         mPageLimit = pageLimit;
     }
 
-    protected final int getPageLimit() {
+    public int getPageLimit() {
         return mPageLimit;
     }
 
@@ -184,47 +188,47 @@ public abstract class BaseHttpLvFragment<T> extends BaseHttpUiFragment<T> {
      *
      * @param index 页码
      */
-    protected final void setPageIndex(int index) {
+    public void setPageIndex(int index) {
         mPageIndex = index;
     }
 
-    protected final int getPageIndex() {
+    public int getPageIndex() {
         return mPageIndex;
     }
 
-    protected final ListView getListView() {
+    public ListView getListView() {
         return mListView;
     }
 
-    protected final int getHeaderViewsCount() {
+    public int getHeaderViewsCount() {
         return mListView.getHeaderViewsCount();
     }
 
-    protected final int getFooterViewsCount() {
+    public int getFooterViewsCount() {
         return mListView.getFooterViewsCount();
     }
 
-    protected final void addHeaderView(View v) {
+    public void addHeaderView(View v) {
         mListView.addHeaderView(v);
     }
 
-    protected final void addFooterView(View v) {
+    public void addFooterView(View v) {
         mListView.addFooterView(v);
     }
 
-    protected final void removeHeaderView(View v) {
+    public void removeHeaderView(View v) {
         mListView.removeHeaderView(v);
     }
 
-    protected final void removeFooterView(View v) {
+    public void removeFooterView(View v) {
         mListView.removeFooterView(v);
     }
 
-    protected final void setAdapter(ExLvAdapter adapter) {
+    public void setAdapter(ExLvAdapter adapter) {
         mListView.setAdapter(adapter);
     }
 
-    protected final ExLvAdapter getAdapter() {
+    public ExLvAdapter getAdapter() {
         ListAdapter adapter = mListView.getAdapter();
         if (adapter instanceof HeaderViewListAdapter) {
             return (ExLvAdapter) ((HeaderViewListAdapter) adapter).getWrappedAdapter();
@@ -239,9 +243,9 @@ public abstract class BaseHttpLvFragment<T> extends BaseHttpUiFragment<T> {
         if (adapter == null) {
             return false;
         }
-        final int adapterItemCount = adapter.getCount();
+        int adapterItemCount = adapter.getCount();
         List<?> ts = getListInvalidateContent(t);
-        final int currentItemCount = CollectionUtil.size(ts);
+        int currentItemCount = CollectionUtil.size(ts);
         if (currentItemCount == 0) {
             if (mPageIndex == PAGE_START_INDEX) {
                 if (adapterItemCount > 0) {
@@ -280,7 +284,7 @@ public abstract class BaseHttpLvFragment<T> extends BaseHttpUiFragment<T> {
     }
 
     @Override
-    public final void showLoading() {
+    public void showLoading() {
         switch (mRefreshMode) {
             case SWIPE:
                 showSwipeRefresh();
@@ -301,7 +305,7 @@ public abstract class BaseHttpLvFragment<T> extends BaseHttpUiFragment<T> {
     }
 
     @Override
-    public final void hideLoading() {
+    public void hideLoading() {
         switch (mRefreshMode) {
             case SWIPE:
                 hideSwipeRefresh();
@@ -353,36 +357,36 @@ public abstract class BaseHttpLvFragment<T> extends BaseHttpUiFragment<T> {
 
     // swipe refresh
     // =============================================================================================
-    protected final SwipeRefreshLayout getSwipeRefreshLayout() {
+    public SwipeRefreshLayout getSwipeRefreshLayout() {
         return mSwipeRl;
     }
 
 
-    protected final void setSwipeRefreshEnable(boolean enable) {
+    public void setSwipeRefreshEnable(boolean enable) {
         mSwipeRl.setEnabled(enable);
     }
 
-    protected final boolean isSwipeRefreshing() {
+    public boolean isSwipeRefreshing() {
         return mSwipeRl.isRefreshing();
     }
 
-    protected final void setOnRefreshListener(OnRefreshListener lisn) {
+    public void setOnRefreshListener(OnRefreshListener lisn) {
         mSwipeRl.setOnRefreshListener(lisn);
     }
 
-    protected final void showSwipeRefresh() {
+    public void showSwipeRefresh() {
         if (!isSwipeRefreshing()) {
             mSwipeRl.setRefreshing(true);
         }
     }
 
-    protected final void hideSwipeRefresh() {
+    public void hideSwipeRefresh() {
         if (isSwipeRefreshing()) {
             mSwipeRl.setRefreshing(false);
         }
     }
 
-    protected final void setSwipeRefreshColors(@ColorRes int... colorResIds) {
+    public void setSwipeRefreshColors(@ColorRes int... colorResIds) {
         mSwipeRl.setColorSchemeResources(colorResIds);
     }
     // =============================================================================================
@@ -390,51 +394,51 @@ public abstract class BaseHttpLvFragment<T> extends BaseHttpUiFragment<T> {
 
     // load more
     // =============================================================================================
-    protected final void setLoadMoreEnable(boolean enable) {
+    public void setLoadMoreEnable(boolean enable) {
         if (mListView instanceof JListView) {
             ((JListView) mListView).setLoadMoreEnable(enable);
         }
     }
 
-    protected final boolean isLoadMoreEnable() {
+    public boolean isLoadMoreEnable() {
         return mListView instanceof JListView && ((JListView) mListView).isLoadMoreEnable();
     }
 
-    protected final void addLoadMoreIfNecessary() {
+    public void addLoadMoreIfNecessary() {
         if (isLoadMoreEnable()) {
             ((JListView) mListView).addLoadMoreIfNotExist();
         }
     }
 
-    protected final boolean isLoadingMore() {
+    public boolean isLoadingMore() {
         return isLoadMoreEnable() && ((JListView) mListView).isLoadingMore();
     }
 
-    protected final void setOnLoadMoreListener(LoadMore.OnLoadMoreListener listener) {
+    public void setOnLoadMoreListener(LoadMore.OnLoadMoreListener listener) {
         if (isLoadMoreEnable()) {
             ((JListView) mListView).setOnLoadMoreListener(listener);
         }
     }
 
-    protected final void stopLoadMore() {
+    public void stopLoadMore() {
         if (isLoadMoreEnable()) {
             ((JListView) mListView).stopLoadMore();
         }
     }
 
-    protected final void setLoadMoreFailed() {
+    public void setLoadMoreFailed() {
         if (isLoadMoreEnable()) {
             ((JListView) mListView).setLoadMoreFailed();
         }
     }
 
-    protected final void hideLoadMore() {
+    public void hideLoadMore() {
         if (isLoadMoreEnable()) {
             ((JListView) mListView).hideLoadMore();
         }
     }
 
-    protected final void setLoadMoreTheme(LoadMore.Theme theme) {
+    public void setLoadMoreTheme(LoadMore.Theme theme) {
         if (isLoadMoreEnable()) {
             switch (theme) {
                 case LIGHT:
@@ -449,7 +453,7 @@ public abstract class BaseHttpLvFragment<T> extends BaseHttpUiFragment<T> {
         }
     }
 
-    protected final void setLoadMoreHintColor(@ColorRes int resId) {
+    public void setLoadMoreHintColor(@ColorRes int resId) {
         if (isLoadMoreEnable()) {
             ((JListView) mListView).setLoadMoreHintTextColor(resId);
         }
