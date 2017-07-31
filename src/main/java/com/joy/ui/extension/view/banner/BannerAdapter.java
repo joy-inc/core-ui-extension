@@ -2,15 +2,14 @@ package com.joy.ui.extension.view.banner;
 
 import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
+import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 
 import com.joy.ui.adapter.ExPagerAdapter;
 import com.joy.ui.extension.view.fresco.FrescoImage;
 import com.joy.ui.view.banner.indicator.IndicatorAdapter;
 import com.joy.utils.LayoutInflater;
-import com.joy.utils.LogMgr;
 
 import java.util.List;
 
@@ -19,14 +18,35 @@ import java.util.List;
  */
 public class BannerAdapter<T> extends ExPagerAdapter<T> implements IndicatorAdapter {
 
+    private SparseArray<View> mCacheViews;
     private BannerHolder mHolder;
     private int w, h;
 
     public BannerAdapter(@LayoutRes int layoutResId, List<T> ts, int w, int h) {
+        mCacheViews = new SparseArray<>();
         mHolder = new BannerHolder(layoutResId);
         setData(ts);
         this.w = w;
         this.h = h;
+    }
+
+    @Override
+    public Object instantiateItem(ViewGroup container, int position) {
+        View view = mCacheViews.get(position % getIndicatorCount());
+        if (view == null) {
+            view = getItemView(container, position);
+            mCacheViews.put(position, view);
+        }
+        if (view.getParent() != null) {
+            container.removeView(view);
+        }
+        container.addView(view);
+        invalidateItemView(container, (FrescoImage) view, position, getItem(position));
+        return view;
+    }
+
+    @Override
+    public void destroyItem(ViewGroup container, int position, Object object) {
     }
 
     @Override
@@ -49,10 +69,9 @@ public class BannerAdapter<T> extends ExPagerAdapter<T> implements IndicatorAdap
         return mHolder.getItemView(container, position);
     }
 
-//    @Override
-//    protected void invalidateItemView(int position, T t) {
-//        mHolder.invalidateItemView((FrescoImage) getCacheView(position), t);
-//    }
+    protected void invalidateItemView(ViewGroup container, FrescoImage fivCover, int position, T t) {
+        mHolder.invalidateItemView(container, fivCover, position, t);
+    }
 
     private class BannerHolder {
         private
@@ -64,61 +83,47 @@ public class BannerAdapter<T> extends ExPagerAdapter<T> implements IndicatorAdap
         }
 
         View getItemView(@NonNull ViewGroup parent, int position) {
-//            FrescoImage1 fivCover;
-//            try {
-//                fivCover = LayoutInflater.inflate(parent.getContext(), layoutResId, parent, false);
-//            } catch (Exception e) {// 退出APP把Fresco资源回收后，再去inflate frescoImage时会抛出空指针异常。
-//                return new View(parent.getContext());
-//            }
-//            fivCover.setOnClickListener(v -> callbackOnItemClickListener(position % getIndicatorCount(), v));
-//            T t = getItem(position);
-//            if (t instanceof Integer) {
-//                fivCover.resize((Integer) t, w, h);
-//            } else if (t instanceof String) {
-//                fivCover.resize((String) t, w, h);
-//            } else {
-//                fivCover.resize(t.toString(), w, h);
-//            }
-//            LogMgr.i("daisw","====getItemView:::"+position+"======="+fivCover.getVisibility());
-//            return fivCover;
-
-            View imageView = LayoutInflater.inflate(parent.getContext(), layoutResId, parent, false);
-//            LogMgr.i("daisw", "====" + imageView.getLeft() + "==" + imageView.getTop() + "==" + imageView.getRight() + "==" + imageView.getBottom() + "==" + position);
-
-
-            int count = parent.getChildCount();
-            for (int i = 0; i < count && position > 1; i++) {
-                View child = parent.getChildAt(i);
-                if (i == 0) {
-                    int left = 1440 * (position - 2);
-                    child.setLeft(left);
-                    child.setRight(left + 1440);
-                    child.setBottom(460);
-                } else if (i == 1) {
-                    int left = 1440 * (position - 1);
-                    child.setLeft(left);
-                    child.setRight(left + 1440);
-                    child.setBottom(460);
-                }
+            FrescoImage fivCover;
+            try {
+                fivCover = LayoutInflater.inflate(parent.getContext(), layoutResId, parent, false);
+            } catch (Exception e) {// 退出APP把Fresco资源回收后，再去inflate frescoImage时会抛出空指针异常。
+                return new View(parent.getContext());
             }
-            int left = 1440 * position;
-            imageView.setLeft(left);
-            imageView.setRight(left + 1440);
-            imageView.setBottom(460);
-            return imageView;
+            fivCover.setOnClickListener(v -> callbackOnItemClickListener(position % getIndicatorCount(), v));
+            return fivCover;
         }
 
-//        public final void invalidateItemView(FrescoImage fivCover, T t) {
-//            if (fivCover == null || t == null) {
-//                return;
-//            }
-//            if (t instanceof Integer) {
-//                fivCover.resize((Integer) t, w, h);
-//            } else if (t instanceof String) {
-//                fivCover.resize((String) t, w, h);
-//            } else {
-//                fivCover.resize(t.toString(), w, h);
-//            }
-//        }
+        public final void invalidateItemView(ViewGroup container, FrescoImage fivCover, int position, T t) {
+            if (fivCover == null || t == null) {
+                return;
+            }
+            if (t instanceof Integer) {
+                fivCover.resize((Integer) t, w, h);
+            } else if (t instanceof String) {
+                fivCover.resize((String) t, w, h);
+            } else {
+                fivCover.resize(t.toString(), w, h);
+            }
+
+            int count = container.getChildCount();
+            for (int i = 0; i < count && position > 1; i++) {
+                View child = container.getChildAt(i);
+                if (i == 0) {
+                    int left = w * (position - 2);
+                    child.setLeft(left);
+                    child.setRight(left + w);
+                    child.setBottom(h);
+                } else if (i == 1) {
+                    int left = w * (position - 1);
+                    child.setLeft(left);
+                    child.setRight(left + w);
+                    child.setBottom(h);
+                }
+            }
+            int left = w * position;
+            fivCover.setLeft(left);
+            fivCover.setRight(left + w);
+            fivCover.setBottom(h);
+        }
     }
 }
