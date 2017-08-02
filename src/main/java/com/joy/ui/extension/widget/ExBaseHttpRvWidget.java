@@ -54,14 +54,14 @@ public abstract class ExBaseHttpRvWidget<T> extends ExBaseHttpWidget<T> {
      *
      * @return 自定义的RecyclerView
      */
-    protected RecyclerView provideRecyclerView() {
+    public RecyclerView provideRecyclerView() {
         JRecyclerView jrv = LayoutInflater.inflate(getActivity(), R.layout.lib_view_recycler);
         jrv.setLoadMoreView(provideLoadMoreView());
         jrv.setOnLoadMoreListener(getOnLoadMoreListener());
         return jrv;
     }
 
-    protected View provideLoadMoreView() {
+    public View provideLoadMoreView() {
         return JLoadingView.getLoadMore(getActivity());
     }
 
@@ -73,7 +73,7 @@ public abstract class ExBaseHttpRvWidget<T> extends ExBaseHttpWidget<T> {
      *
      * @return 自定义的LayoutManager
      */
-    protected LayoutManager provideLayoutManager() {
+    public LayoutManager provideLayoutManager() {
         return new LinearLayoutManager(getActivity());
     }
 

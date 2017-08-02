@@ -117,11 +117,11 @@ public abstract class BaseHttpLvActivity<T> extends BaseHttpUiActivity<T> {
     }
 
     @Override
-    public ObjectRequest<T> getRequest() {
+    protected ObjectRequest<T> getRequest() {
         return getRequest(mPageIndex, mPageLimit);
     }
 
-    public abstract ObjectRequest<T> getRequest(int pageIndex, int pageLimit);
+    protected abstract ObjectRequest<T> getRequest(int pageIndex, int pageLimit);
 
     @Override
     public Subscription launchRefreshOnly() {

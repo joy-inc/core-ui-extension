@@ -57,14 +57,14 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
      *
      * @return 自定义的RecyclerView
      */
-    protected RecyclerView provideRecyclerView() {
+    public RecyclerView provideRecyclerView() {
         JRecyclerView jrv = inflateLayout(R.layout.lib_view_recycler);
         jrv.setLoadMoreView(provideLoadMoreView());
         jrv.setOnLoadMoreListener(getOnLoadMoreListener());
         return jrv;
     }
 
-    protected View provideLoadMoreView() {
+    public View provideLoadMoreView() {
         return JLoadingView.getLoadMore(this);
     }
 
@@ -76,7 +76,7 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
      *
      * @return 自定义的LayoutManager
      */
-    protected LayoutManager provideLayoutManager() {
+    public LayoutManager provideLayoutManager() {
         return new LinearLayoutManager(this);
     }
 
