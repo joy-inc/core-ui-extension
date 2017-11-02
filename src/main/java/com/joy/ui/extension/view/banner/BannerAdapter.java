@@ -41,7 +41,7 @@ public class BannerAdapter<T> extends ExPagerAdapter<T> implements IndicatorAdap
             container.removeView(view);
         }
         container.addView(view);
-        invalidateItemView(container, (FrescoImage) view, position, getItem(position));
+        invalidateItemView(container, view instanceof FrescoImage ? (FrescoImage) view : null, position, getItem(position));
         return view;
     }
 
