@@ -2,6 +2,7 @@ package com.joy.ui.extension.view.fresco;
 
 import android.content.Context;
 import android.net.Uri;
+import android.provider.MediaStore;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
@@ -17,6 +18,7 @@ import com.facebook.imagepipeline.core.ImagePipelineConfig;
 import com.facebook.imagepipeline.request.ImageRequest;
 import com.facebook.imagepipeline.request.ImageRequestBuilder;
 import com.joy.utils.LogMgr;
+import com.joy.utils.TextUtil;
 
 /**
  * Created by KEVIN.DAI on 16/1/4.
@@ -60,17 +62,17 @@ public class FrescoImage extends SimpleDraweeView {
     }
 
     public void setImageGifURI(@DrawableRes int drawableResId, int width, int height) {
-        setImageGifURI("res://" + getContext().getPackageName() + "/" + drawableResId, width, height);
+        setImageGifURI(genResourceUrl(drawableResId), width, height);
     }
 
     /**
      * Displays an image(include * and gif) given by the uriString.
      *
-     * @param uri of the image
+     * @param url of the image
      * @undeprecate
      */
-    public void setImageGifURI(String uri, int width, int height) {
-        ImageRequest request = ImageRequestBuilder.newBuilderWithSource(Uri.parse(uri))
+    public void setImageGifURI(String url, int width, int height) {
+        ImageRequest request = ImageRequestBuilder.newBuilderWithSource(trimUrl(url))
                 .setResizeOptions(new ResizeOptions(width, height))
                 .build();
         DraweeController controller = Fresco.newDraweeControllerBuilder()
@@ -82,16 +84,26 @@ public class FrescoImage extends SimpleDraweeView {
     }
 
     /**
-     * Displays an image given by the uri.
+     * Displays an image given by the res id.
      *
-     * @param uri url of the image
+     * @param drawableResId drawableResId of the image
      * @undeprecate
      */
-    public void setImageURI(@Nullable String uri) {
+    public void setImageURI(@DrawableRes int drawableResId) {
+        setImageURI(genResourceUrl(drawableResId));
+    }
+
+    /**
+     * Displays an image given by the url.
+     *
+     * @param url url of the image
+     * @undeprecate
+     */
+    public void setImageURI(@Nullable String url) {
         int w = getWidth();
         int h = getHeight();
         if (w > 0 && h > 0) {
-            resize(uri, w, h);
+            resize(url, w, h);
             return;
         }
         ViewGroup.LayoutParams lp = getLayoutParams();
@@ -99,30 +111,20 @@ public class FrescoImage extends SimpleDraweeView {
             int width = lp.width;
             int height = lp.height;
             if (width > 0 && height > 0) {
-                resize(uri, width, height);
+                resize(url, width, height);
                 return;
             }
         }
         LogMgr.e("FrescoImage", "============= Notice: not resize ============");
-        setImageURI(Uri.parse(uri == null ? "" : uri));
-    }
-
-    /**
-     * Displays an image given by the res id.
-     *
-     * @param drawableResId drawableResId of the image
-     * @undeprecate
-     */
-    public void setImageURI(@DrawableRes int drawableResId) {
-        setImageURI("res://" + getContext().getPackageName() + "/" + drawableResId);
-    }
-
-    public void resize(@Nullable String url, int width, int height) {
-        resize(Uri.parse(url == null ? "" : url), width, height);
+        setImageURI(trimUrl(url));
     }
 
     public void resize(@DrawableRes int drawableResId, int width, int height) {
-        resize("res://" + getContext().getPackageName() + "/" + drawableResId, width, height);
+        resize(genResourceUrl(drawableResId), width, height);
+    }
+
+    public void resize(@Nullable String url, int width, int height) {
+        resize(trimUrl(url), width, height);
     }
 
     public void resize(@NonNull Uri uri, int width, int height) {
@@ -138,7 +140,7 @@ public class FrescoImage extends SimpleDraweeView {
     }
 
     public void blur(@Nullable String url, @IntRange(from = 0, to = 25) int radius) {
-        blur(Uri.parse(url == null ? "" : url), radius);
+        blur(trimUrl(url), radius);
     }
 
     public void blur(@NonNull Uri uri, @IntRange(from = 0, to = 25) int radius) {
@@ -153,7 +155,7 @@ public class FrescoImage extends SimpleDraweeView {
     }
 
     public void resizeBlur(@Nullable String url, int width, int height, @IntRange(from = 0, to = 25) int radius) {
-        resizeBlur(Uri.parse(url == null ? "" : url), width, height, radius);
+        resizeBlur(trimUrl(url), width, height, radius);
     }
 
     public void resizeBlur(@NonNull Uri uri, int width, int height, @IntRange(from = 0, to = 25) int radius) {
@@ -166,5 +168,24 @@ public class FrescoImage extends SimpleDraweeView {
                 .setImageRequest(request)
                 .build();
         setController(controller);
+    }
+
+    private Uri trimUrl(String url) {
+        if (TextUtil.isEmptyTrim(url)) {
+            return Uri.EMPTY;
+        }
+        Uri uri;
+        if (url.startsWith("/storage")) {
+            uri = Uri.parse("file:" + url);
+        } else if (url.startsWith("http") || url.startsWith("res")) {
+            uri = Uri.parse(url);
+        } else {// id格式的
+            uri = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, url);
+        }
+        return uri;
+    }
+
+    private String genResourceUrl(@DrawableRes int resId) {
+        return "res://" + getContext().getPackageName() + "/" + resId;
     }
 }
