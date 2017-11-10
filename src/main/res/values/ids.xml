@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- for RvAdapter -->
+    <item name="tag_view_click_listener_id" type="id" />
+    <item name="tag_view_long_click_listener_id" type="id" />
+</resources>
