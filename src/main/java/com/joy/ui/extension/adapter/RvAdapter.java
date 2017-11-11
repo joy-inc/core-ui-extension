@@ -48,11 +48,10 @@ public abstract class RvAdapter<T> extends ExRvAdapter<RvViewHolder<T>, T> {
             }
             targetViews = new View[]{viewHolder.getItemView()};
         }
-        int position = viewHolder.getAdapterPosition() - getHeadersCount();
         for (View targetView : targetViews) {
             if (!isViewHoldClickListener(targetView)) {
                 setViewHoldClickListener(targetView);
-                targetView.setOnClickListener((v) -> callbackOnItemClickListener(position, v));
+                targetView.setOnClickListener((v) -> callbackOnItemClickListener(viewHolder.getAdapterPosition() - getHeadersCount(), v));
             }
         }
     }
@@ -65,12 +64,11 @@ public abstract class RvAdapter<T> extends ExRvAdapter<RvViewHolder<T>, T> {
             }
             targetViews = new View[]{viewHolder.getItemView()};
         }
-        int position = viewHolder.getAdapterPosition() - getHeadersCount();
         for (View targetView : targetViews) {
             if (!isViewHoldLongClickListener(targetView)) {
                 setViewHoldLongClickListener(targetView);
                 targetView.setOnLongClickListener(v -> {
-                    callbackOnItemLongClickListener(position, v);
+                    callbackOnItemLongClickListener(viewHolder.getAdapterPosition() - getHeadersCount(), v);
                     return true;
                 });
             }
