@@ -76,11 +76,13 @@ public abstract class RvAdapter<T> extends ExRvAdapter<RvViewHolder<T>, T> {
     }
 
     private boolean isViewHoldClickListener(View v) {
-        return (boolean) v.getTag(R.id.tag_view_click_listener_id);
+        Object tag = v.getTag(R.id.tag_view_click_listener_id);
+        return tag != null && (boolean) tag;
     }
 
     private boolean isViewHoldLongClickListener(View v) {
-        return (boolean) v.getTag(R.id.tag_view_long_click_listener_id);
+        Object tag = v.getTag(R.id.tag_view_long_click_listener_id);
+        return tag != null && (boolean) tag;
     }
 
     private void setViewHoldClickListener(View v) {
