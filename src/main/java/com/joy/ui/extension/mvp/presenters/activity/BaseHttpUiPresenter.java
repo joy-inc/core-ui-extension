@@ -3,9 +3,9 @@ package com.joy.ui.extension.mvp.presenters.activity;
 import com.joy.http.JoyHttp;
 import com.joy.http.LaunchMode;
 import com.joy.http.volley.Request;
-import com.joy.ui.activity.interfaces.BaseViewNet;
 import com.joy.ui.extension.mvp.presenters.PresenterImpl;
 import com.joy.ui.extension.mvp.presenters.RequestLauncher;
+import com.joy.ui.interfaces.BaseViewNet;
 
 import rx.Observable;
 

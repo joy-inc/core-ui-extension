@@ -8,8 +8,8 @@ import com.joy.http.LaunchMode;
 import com.joy.http.volley.Request;
 import com.joy.ui.R;
 import com.joy.ui.RefreshMode;
-import com.joy.ui.activity.interfaces.BaseViewNetRv;
 import com.joy.ui.adapter.ExRvAdapter;
+import com.joy.ui.interfaces.BaseViewNetRv;
 import com.joy.ui.view.LoadMore;
 
 import java.util.List;

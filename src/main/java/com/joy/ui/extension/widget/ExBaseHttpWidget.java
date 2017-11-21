@@ -48,9 +48,8 @@ public abstract class ExBaseHttpWidget<T> extends ExBaseWidget {
 
     protected FrameLayout mContentParent;
     protected View mTipView;
-    protected
     @TipType
-    int mTipType;
+    protected int mTipType;
     protected View mLoadingView;
     private int LOADING_RES_ID = View.NO_ID;
     private int ERROR_RES_ID = R.drawable.ic_tip_error;

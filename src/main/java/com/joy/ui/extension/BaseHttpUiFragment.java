@@ -5,7 +5,7 @@ import com.joy.http.JoyHttp;
 import com.joy.http.LaunchMode;
 import com.joy.http.volley.Request;
 import com.joy.utils.LogMgr;
-import com.trello.rxlifecycle.FragmentEvent;
+import com.trello.rxlifecycle.android.FragmentEvent;
 
 import rx.Subscription;
 import rx.functions.Action0;
