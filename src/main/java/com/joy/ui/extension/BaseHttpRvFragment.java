@@ -277,7 +277,7 @@ public abstract class BaseHttpRvFragment<T> extends BaseHttpUiFragment<T> {
     }
 
     @Override
-    protected final boolean invalidateContent(T t) {
+    protected boolean invalidateContent(T t) {
         ExRvAdapter adapter = getAdapter();
         if (adapter == null) {
             return false;

@@ -273,7 +273,7 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
     }
 
     @Override
-    protected final boolean invalidateContent(T t) {
+    protected boolean invalidateContent(T t) {
         ExRvAdapter adapter = getAdapter();
         if (adapter == null) {
             return false;
