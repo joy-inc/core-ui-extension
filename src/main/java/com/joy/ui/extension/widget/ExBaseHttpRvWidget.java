@@ -40,7 +40,7 @@ public abstract class ExBaseHttpRvWidget<T> extends ExBaseHttpWidget<T> {
     protected int mPageLimit = PAGE_UPPER_LIMIT;
     protected int mPageIndex = PAGE_START_INDEX;
     protected int mSortIndex = mPageIndex;
-    protected RefreshMode mRefreshMode;
+    protected RefreshMode mRefreshMode = RefreshMode.FRAME;
 
     public ExBaseHttpRvWidget(Activity activity) {
         super(activity);
@@ -87,10 +87,6 @@ public abstract class ExBaseHttpRvWidget<T> extends ExBaseHttpWidget<T> {
 
     public RecyclerView getRecyclerView() {
         return mRecyclerView;
-    }
-
-    public LayoutManager getLayoutManager() {
-        return mRecyclerView.getLayoutManager();
     }
 
     public void setRefreshMode(RefreshMode mode) {
@@ -264,7 +260,7 @@ public abstract class ExBaseHttpRvWidget<T> extends ExBaseHttpWidget<T> {
     }
 
     public void setAdapter(ExRvAdapter adapter) {
-        mRecyclerView.setAdapter(new RecyclerAdapter(adapter, getLayoutManager()));
+        mRecyclerView.setAdapter(new RecyclerAdapter(adapter, mRecyclerView.getLayoutManager()));
     }
 
     public ExRvAdapter getAdapter() {
@@ -303,12 +299,12 @@ public abstract class ExBaseHttpRvWidget<T> extends ExBaseHttpWidget<T> {
             adapter.setData(ts);
             if (adapterItemCount == 0) {
                 adapter.notifyItemRangeInserted(0, currentItemCount);
-                getLayoutManager().scrollToPosition(0);
+                mRecyclerView.getLayoutManager().scrollToPosition(0);
                 addLoadMoreIfNecessary();
             } else {
                 adapter.notifyItemRangeRemoved(0, adapterItemCount);
                 adapter.notifyItemRangeInserted(0, currentItemCount);// TODO 可以合并成adapter.notifyItemRangeChanged(0, adapterItemCount);
-                getLayoutManager().scrollToPosition(0);
+                mRecyclerView.getLayoutManager().scrollToPosition(0);
             }
         } else {
             adapter.addAll(ts);

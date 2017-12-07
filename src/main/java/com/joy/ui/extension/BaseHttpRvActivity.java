@@ -42,7 +42,7 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
     protected int mPageLimit = PAGE_UPPER_LIMIT;
     protected int mPageIndex = PAGE_START_INDEX;
     protected int mSortIndex = mPageIndex;
-    protected RefreshMode mRefreshMode;
+    protected RefreshMode mRefreshMode = RefreshMode.FRAME;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,10 +90,6 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
 
     public RecyclerView getRecyclerView() {
         return mRecyclerView;
-    }
-
-    public LayoutManager getLayoutManager() {
-        return mRecyclerView.getLayoutManager();
     }
 
     public void setRefreshMode(RefreshMode mode) {
@@ -260,7 +256,7 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
     }
 
     public void setAdapter(ExRvAdapter adapter) {
-        mRecyclerView.setAdapter(new RecyclerAdapter(adapter, getLayoutManager()));
+        mRecyclerView.setAdapter(new RecyclerAdapter(adapter, mRecyclerView.getLayoutManager()));
     }
 
     public ExRvAdapter getAdapter() {
@@ -299,12 +295,12 @@ public abstract class BaseHttpRvActivity<T> extends BaseHttpUiActivity<T> {
             adapter.setData(ts);
             if (adapterItemCount == 0) {
                 adapter.notifyItemRangeInserted(0, currentItemCount);
-                getLayoutManager().scrollToPosition(0);
+                mRecyclerView.getLayoutManager().scrollToPosition(0);
                 addLoadMoreIfNecessary();
             } else {
                 adapter.notifyItemRangeRemoved(0, adapterItemCount);
                 adapter.notifyItemRangeInserted(0, currentItemCount);// TODO 可以合并成adapter.notifyItemRangeChanged(0, adapterItemCount);
-                getLayoutManager().scrollToPosition(0);
+                mRecyclerView.getLayoutManager().scrollToPosition(0);
             }
         } else {
             adapter.addAll(ts);

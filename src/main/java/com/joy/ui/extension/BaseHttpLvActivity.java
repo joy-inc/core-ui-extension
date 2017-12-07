@@ -40,7 +40,7 @@ public abstract class BaseHttpLvActivity<T> extends BaseHttpUiActivity<T> {
     protected int mPageLimit = PAGE_UPPER_LIMIT;
     protected int mPageIndex = PAGE_START_INDEX;
     protected int mSortIndex = mPageIndex;
-    protected RefreshMode mRefreshMode;
+    protected RefreshMode mRefreshMode = RefreshMode.FRAME;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

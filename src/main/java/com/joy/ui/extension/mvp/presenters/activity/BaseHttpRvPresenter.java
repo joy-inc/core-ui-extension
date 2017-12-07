@@ -125,12 +125,12 @@ public class BaseHttpRvPresenter<T, V extends BaseViewNetRv> extends BaseHttpUiP
                 adapter.setData(ts);
                 if (adapterItemCount == 0) {
                     adapter.notifyItemRangeInserted(0, currentItemCount);
-                    getBaseView().getLayoutManager().scrollToPosition(0);
+                    getBaseView().getRecyclerView().getLayoutManager().scrollToPosition(0);
                     getBaseView().addLoadMoreIfNecessary();
                 } else {
                     adapter.notifyItemRangeRemoved(0, adapterItemCount);
                     adapter.notifyItemRangeInserted(0, currentItemCount);// TODO 可以合并成adapter.notifyItemRangeChanged(0, adapterItemCount);
-                    getBaseView().getLayoutManager().scrollToPosition(0);
+                    getBaseView().getRecyclerView().getLayoutManager().scrollToPosition(0);
                 }
             } else {
                 adapter.addAll(ts);
