@@ -19,12 +19,12 @@ public abstract class RvAdapter<T> extends ExRvAdapter<RvViewHolder<T>, T> {
 
     public RvAdapter() {
         layouts = new SparseIntArray();
-        addLayouts();
+        onCreateItemView();
     }
 
-    public abstract void addLayouts();
+    protected abstract void onCreateItemView();
 
-    public void addLayout(@LayoutRes int layoutId) {
+    protected void setItemView(@LayoutRes int layoutId) {
         layouts.put(0, layoutId);
     }
 
@@ -38,7 +38,7 @@ public abstract class RvAdapter<T> extends ExRvAdapter<RvViewHolder<T>, T> {
         invalidate(viewHolder, position, getItem(position));
     }
 
-    public abstract void invalidate(RvViewHolder<T> viewHolder, int position, T t);
+    protected abstract void invalidate(RvViewHolder<T> viewHolder, int position, T t);
 
     @Override
     protected void bindOnClickListener(RvViewHolder<T> viewHolder, View... targetViews) {

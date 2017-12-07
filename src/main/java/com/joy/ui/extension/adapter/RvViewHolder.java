@@ -1,9 +1,13 @@
 package com.joy.ui.extension.adapter;
 
+import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.IdRes;
+import android.support.annotation.StringRes;
 import android.util.SparseArray;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.joy.ui.adapter.ExRvViewHolder;
@@ -37,8 +41,16 @@ public class RvViewHolder<T> extends ExRvViewHolder<T> {
         }
     }
 
-    public void setText(@IdRes int textViewId, CharSequence text) {
-        TextView tv = getView(textViewId);
+    public void setText(@IdRes int textResId, @StringRes int resId, Object... formatArgs) {
+        try {
+            setText(textResId, getItemView().getContext().getString(resId, formatArgs));
+        } catch (Resources.NotFoundException e) {
+            setText(textResId, Integer.toString(resId));
+        }
+    }
+
+    public void setText(@IdRes int textResId, CharSequence text) {
+        TextView tv = getView(textResId);
         tv.setText(text);
     }
 
@@ -55,6 +67,13 @@ public class RvViewHolder<T> extends ExRvViewHolder<T> {
         if (iv instanceof FrescoImage) {
             FrescoImage frescoImage = (FrescoImage) iv;
             frescoImage.resize(url, w, h);
+        }
+    }
+
+    public void setImageDrawable(@IdRes int imageResId, Drawable drawable){
+        View iv = getView(imageResId);
+        if(iv instanceof ImageView){
+            ((ImageView)iv).setImageDrawable(drawable);
         }
     }
 

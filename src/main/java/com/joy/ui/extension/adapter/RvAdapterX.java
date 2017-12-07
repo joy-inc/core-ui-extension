@@ -8,7 +8,7 @@ import android.support.annotation.LayoutRes;
 
 public abstract class RvAdapterX<T extends RvEntityX> extends RvAdapter<T> {
 
-    public void addLayout(int viewType, @LayoutRes int layoutId) {
+    protected void setItemView(int viewType, @LayoutRes int layoutId) {
         layouts.put(viewType, layoutId);
     }
 
@@ -23,9 +23,9 @@ public abstract class RvAdapterX<T extends RvEntityX> extends RvAdapter<T> {
     }
 
     @Override
-    public final void invalidate(RvViewHolder<T> viewHolder, int position, T t) {
+    protected final void invalidate(RvViewHolder<T> viewHolder, int position, T t) {
         invalidate(viewHolder.getItemViewType(), viewHolder, position, t);
     }
 
-    public abstract void invalidate(int viewType, RvViewHolder<T> viewHolder, int position, T t);
+    protected abstract void invalidate(int viewType, RvViewHolder<T> viewHolder, int position, T t);
 }
