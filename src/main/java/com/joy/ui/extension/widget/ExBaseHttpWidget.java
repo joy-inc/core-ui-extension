@@ -30,6 +30,8 @@ import rx.functions.Action0;
 import rx.functions.Action1;
 import rx.functions.Func1;
 
+import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.JELLY_BEAN;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 import static com.joy.http.LaunchMode.CACHE_AND_REFRESH;
@@ -85,7 +87,7 @@ public abstract class ExBaseHttpWidget<T> extends ExBaseWidget {
     }
 
     public final void setBackground(Drawable background) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+        if (SDK_INT >= JELLY_BEAN) {
             mContentParent.setBackground(background);
         } else {
             mContentParent.setBackgroundDrawable(background);

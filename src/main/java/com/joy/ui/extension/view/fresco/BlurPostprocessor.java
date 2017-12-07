@@ -26,6 +26,9 @@ import com.facebook.cache.common.CacheKey;
 import com.facebook.cache.common.SimpleCacheKey;
 import com.facebook.imagepipeline.request.BasePostprocessor;
 
+import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.JELLY_BEAN_MR1;
+
 public class BlurPostprocessor extends BasePostprocessor {
 
     private static int MAX_RADIUS = 25;
@@ -65,7 +68,7 @@ public class BlurPostprocessor extends BasePostprocessor {
         paint.setFlags(Paint.FILTER_BITMAP_FLAG);
         canvas.drawBitmap(source, 0, 0, paint);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+        if (SDK_INT >= JELLY_BEAN_MR1) {
             try {
                 blurredBitmap = RSBlur.blur(context, blurredBitmap, radius);
             } catch (android.renderscript.RSRuntimeException e) {

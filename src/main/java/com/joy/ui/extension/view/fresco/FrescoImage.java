@@ -115,7 +115,7 @@ public class FrescoImage extends SimpleDraweeView {
                 return;
             }
         }
-        LogMgr.e("FrescoImage", "============= Notice: not resize ============");
+        LogMgr.e("FrescoImage", "============= FrescoImage: not resize ============");
         setImageURI(trimUrl(url));
     }
 
@@ -170,7 +170,7 @@ public class FrescoImage extends SimpleDraweeView {
         setController(controller);
     }
 
-    private Uri trimUrl(String url) {
+    public Uri trimUrl(String url) {
         if (TextUtil.isEmptyTrim(url)) {
             return Uri.EMPTY;
         }
@@ -185,7 +185,7 @@ public class FrescoImage extends SimpleDraweeView {
         return uri;
     }
 
-    private String genResourceUrl(@DrawableRes int resId) {
+    public String genResourceUrl(@DrawableRes int resId) {
         return "res://" + getContext().getPackageName() + "/" + resId;
     }
 }
