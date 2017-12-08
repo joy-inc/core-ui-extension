@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:id="@+id/shoot"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/selector_bg_click_dark"
+        android:orientation="vertical"
+        android:paddingBottom="10dp"
+        android:paddingTop="10dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="拍摄"
+            android:textColor="@color/black_trans87"
+            android:textSize="16dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:gravity="center"
+            android:text="照片或视频"
+            android:textColor="@color/black_trans54"
+            android:textSize="14dp" />
+    </LinearLayout>
+
+    <View style="@style/base_divider" />
+
+    <TextView
+        android:id="@+id/album"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="@drawable/selector_bg_click_dark"
+        android:gravity="center"
+        android:text="@string/take_photos_from_album"
+        android:textColor="#1A1A1A"
+        android:textSize="16dp" />
+
+    <TextView
+        android:id="@+id/cancel"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/selector_bg_click_dark"
+        android:gravity="center"
+        android:text="@string/cancel"
+        android:textColor="#1A1A1A"
+        android:textSize="16dp" />
+</LinearLayout>

@@ -1,0 +1,11 @@
+<resources>
+    <!-- photo select -->
+    <string name="take_photos">拍照</string>
+    <string name="take_photos_from_album">从手机相册选择</string>
+    <string name="cancel">取消</string>
+    <string name="toast_please_grant_permissons">请在设置中打开相关权限</string>
+    <string name="toast_please_grant_camera_permission">请在设置中打开相机权限</string>
+    <string name="album_list">相册列表</string>
+    <string name="album_item_size">%d张照片</string>
+    <string name="done_format">完成(%d)</string>
+</resources>

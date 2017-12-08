@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/selector_bg_click_dark">
+
+    <com.joy.ui.extension.view.fresco.FrescoImage
+        android:id="@+id/flCover"
+        android:layout_width="66dp"
+        android:layout_height="66dp"
+        android:layout_alignParentLeft="true"
+        android:layout_centerVertical="true"
+        android:layout_margin="12dp"
+        android:scaleType="centerCrop" />
+
+    <TextView
+        android:id="@+id/tvName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@id/flCover"
+        android:layout_marginTop="6dp"
+        android:layout_toRightOf="@id/flCover"
+        android:singleLine="true"
+        android:textColor="@color/black_trans87" />
+
+    <TextView
+        android:id="@+id/tvSize"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@id/tvName"
+        android:layout_below="@id/tvName"
+        android:layout_marginTop="8dp"
+        android:textColor="@color/black_trans54"
+        android:textSize="12dp" />
+</RelativeLayout>

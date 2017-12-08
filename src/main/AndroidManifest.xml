@@ -1,7 +1,22 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.joy.ui.extension">
 
-    <application
-        android:supportsRtl="true" />
+    <!-- photo -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.CAMERA" />
 
+    <application android:supportsRtl="true">
+        <activity
+            android:name=".photo.select.AlbumPickActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/base_theme" />
+        <activity
+            android:name=".photo.select.PhotoPickActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/base_theme" />
+        <activity
+            android:name=".photo.preview.PhotoPreviewActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/base_theme.translucent.toolbar.photo_preview" />
+    </application>
 </manifest>
