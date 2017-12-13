@@ -5,7 +5,7 @@
 ### 外部引用
 
 ```
-compile 'com.joy.support:core-ui-extension:0.2.1'
+compile 'com.joy.support:core-ui-extension:0.2.2'
 ```
 
 ### 自身依赖
