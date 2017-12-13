@@ -12,7 +12,7 @@ compile 'com.joy.support:core-ui-extension:0.2.2'
 
 ```
 compile 'com.joy.support:core-ui:0.3.5'
-compile 'com.joy.support:core-http:0.2.9'
+compile 'com.joy.support:core-http:0.3.0'
 compile 'com.facebook.fresco:fresco:1.5.0'
 ```
 
